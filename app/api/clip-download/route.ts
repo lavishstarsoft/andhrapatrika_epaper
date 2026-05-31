@@ -70,7 +70,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     }
 
-    const imageRes = await fetch(url);
+    let absoluteUrl = url;
+    if (url.startsWith('/')) {
+      absoluteUrl = `${request.nextUrl.origin}${url}`;
+    }
+
+    const imageRes = await fetch(absoluteUrl);
     if (!imageRes.ok) {
       return NextResponse.json({ error: 'Failed to fetch image' }, { status: imageRes.status });
     }
@@ -139,7 +144,7 @@ export async function GET(request: NextRequest) {
       .join(' | ');
     line1 = line1.replace(/[^\x20-\x7E]/g, '');
 
-    const line2 = 'https://epaper.yellowsingam.com/';
+    const line2 = 'https://andhrapatrikaa.com/';
     const hasLine1 = line1.length > 0;
     
     const line1Size = Math.max(18, Math.round(cropW * 0.038));

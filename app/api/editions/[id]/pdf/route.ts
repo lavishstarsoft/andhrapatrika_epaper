@@ -44,9 +44,14 @@ export async function GET(
       const imageUrl = String(page?.url || '').trim();
       if (!imageUrl) continue;
 
-      const res = await fetch(imageUrl, { cache: 'no-store' });
+      let absoluteUrl = imageUrl;
+      if (imageUrl.startsWith('/')) {
+        absoluteUrl = `${request.nextUrl.origin}${imageUrl}`;
+      }
+
+      const res = await fetch(absoluteUrl, { cache: 'no-store' });
       if (!res.ok) {
-        throw new Error(`Failed to fetch edition page image (${res.status})`);
+        throw new Error(`Failed to fetch edition page image (${res.status}) at ${absoluteUrl}`);
       }
 
       const source = Buffer.from(await res.arrayBuffer());

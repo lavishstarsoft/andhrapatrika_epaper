@@ -15,8 +15,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     }
 
+    let absoluteUrl = url;
+    if (url.startsWith('/')) {
+      absoluteUrl = `${request.nextUrl.origin}${url}`;
+    }
+
     // Fetch the original image from R2
-    const response = await fetch(url);
+    const response = await fetch(absoluteUrl);
     
     if (!response.ok) {
       return NextResponse.json({ error: 'Failed to fetch image' }, { status: response.status });

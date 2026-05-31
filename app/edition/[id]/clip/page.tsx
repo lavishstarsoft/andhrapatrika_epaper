@@ -6,7 +6,7 @@ import ClipImagePreview from '@/components/ClipImagePreview';
 export async function generateMetadata({ params, searchParams }: any): Promise<Metadata> {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
-  
+
   const { id } = resolvedParams;
   const { url, x, y, w, h, base, title, date, page, cid } = resolvedSearchParams;
 
@@ -14,15 +14,15 @@ export async function generateMetadata({ params, searchParams }: any): Promise<M
   const decodedUrl = decodeURIComponent(url || '');
   const decodedTitle = decodeURIComponent(title || 'ePaper Clip');
   const displayDate = date || '';
-  
+
   // Create an absolute URL for the Open Graph image to point directly to the inline crop API
   const cropImageUrl = `${baseUrl}/api/clip-download?url=${encodeURIComponent(decodedUrl)}&x=${x}&y=${y}&w=${w}&h=${h}&date=${encodeURIComponent(displayDate)}&page=${page}&inline=true`;
 
   return {
-    title: `${decodedTitle} | Yellow Singam ePaper | ${displayDate}`,
-    description: 'Shared snippet from Yellow Singam Daily Telugu ePaper',
+    title: `${decodedTitle} | Andhrapatrika ePaper | ${displayDate}`,
+    description: 'Shared snippet from Andhrapatrika Daily Telugu ePaper',
     openGraph: {
-      title: `${decodedTitle} | Yellow Singam ePaper`,
+      title: `${decodedTitle} | Andhrapatrika ePaper`,
       description: `Snippet from Page ${page} of ${displayDate} edition.`,
       images: [
         {
@@ -36,7 +36,7 @@ export async function generateMetadata({ params, searchParams }: any): Promise<M
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${decodedTitle} | Yellow Singam ePaper`,
+      title: `${decodedTitle} | Andhrapatrika ePaper`,
       description: `Snippet from Page ${page} of ${displayDate} edition.`,
       images: [cropImageUrl],
     },
@@ -46,12 +46,12 @@ export async function generateMetadata({ params, searchParams }: any): Promise<M
 export default async function ClipPage({ params, searchParams }: any) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
-  
+
   const { id } = resolvedParams;
   const { url, x, y, w, h, title, date, page, cid, base } = resolvedSearchParams;
   const decodedUrl = decodeURIComponent(url || '');
   const decodedTitle = decodeURIComponent(title || 'ePaper Clip');
-  
+
   // Notice we must use a client-side relative or absolute api path for the page rendering
   const cropImageUrl = `/api/clip-download?url=${encodeURIComponent(decodedUrl)}&x=${x}&y=${y}&w=${w}&h=${h}&date=${encodeURIComponent(date || '')}&page=${page}&inline=true`;
   const baseUrl = base || process.env.NEXTAUTH_URL || 'http://localhost:3000';
@@ -62,8 +62,8 @@ export default async function ClipPage({ params, searchParams }: any) {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10 px-4">
       {/* Branded Clip Card */}
-      <div className="bg-white border-[12px] border-[#D4A800] shadow-2xl max-w-2xl w-full flex flex-col overflow-hidden animate-in fade-in zoom-in duration-500">
-        
+      <div className="bg-white border-[12px] border-[#1721d8] shadow-2xl max-w-2xl w-full flex flex-col overflow-hidden animate-in fade-in zoom-in duration-500">
+
         {/* Card Header with Banner Style & Branded Text */}
         <div className="bg-white flex flex-col border-b border-gray-100">
           <div className="h-2 bg-[#2D3A2D] w-full" />
@@ -77,9 +77,9 @@ export default async function ClipPage({ params, searchParams }: any) {
         </div>
 
         {/* Branded Footer */}
-        <div className="bg-[#D4A800] p-4 text-center">
-          <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-[#2D2D2D] font-bold text-xs sm:text-sm uppercase tracking-tight">
-            <span>epaper.yellowsingam.com</span>
+        <div className="bg-[#1721d8] p-4 text-center">
+          <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-white font-bold text-xs sm:text-sm uppercase tracking-tight">
+            <span>andhrapatrikaa.com</span>
             <span className="hidden sm:inline opacity-30">|</span>
             <span>{date}</span>
             <span className="hidden sm:inline opacity-30">|</span>
@@ -87,8 +87,8 @@ export default async function ClipPage({ params, searchParams }: any) {
             <span className="hidden sm:inline opacity-30">|</span>
             <span>Clip ID: {cid}</span>
           </div>
-          <p className="text-[#2D2D2D]/80 text-[10px] sm:text-xs mt-1.5 font-medium leading-tight">
-            For more details, visit epaper.yellowsingam.com
+          <p className="text-white/80 text-[10px] sm:text-xs mt-1.5 font-medium leading-tight">
+            For more details, visit andhrapatrikaa.com
           </p>
         </div>
       </div>

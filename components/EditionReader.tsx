@@ -677,7 +677,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
     e.stopPropagation();
     const currentPageUrl = getCurrentPageUrl();
     if (!currentPageUrl) return;
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://yellowsingam.com';
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://andhrapatrikaa.com';
     const clipId = `C-${Math.floor(100000 + Math.random() * 900000)}`;
     const displayDate = formatDate(edition?.date);
     const pageNum = currentPage + 1;
@@ -691,8 +691,8 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
     if (typeof window === 'undefined') return;
     const shareUrl = window.location.href;
     const shareData = {
-      title: edition?.name || 'Yellow Singam ePaper',
-      text: `Read ${edition?.name || 'Yellow Singam ePaper'} online`,
+      title: edition?.name || 'Andhrapatrika ePaper',
+      text: `Read ${edition?.name || 'Andhrapatrika ePaper'} online`,
       url: shareUrl,
     };
 
@@ -764,7 +764,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
   const openPlatformShare = (platform: 'whatsapp' | 'facebook' | 'twitter' | 'linkedin') => {
     if (typeof window === 'undefined') return;
     const shareUrl = window.location.href;
-    const title = encodeURIComponent(edition?.name || 'Yellow Singam ePaper');
+    const title = encodeURIComponent(edition?.name || 'Andhrapatrika ePaper');
     const encodedUrl = encodeURIComponent(shareUrl);
 
     const map = {
@@ -835,18 +835,18 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
             </Link>
             <div className="flex flex-col">
               <span className="font-semibold text-sm">Page {currentPage + 1} of {totalPages}</span>
-              <span className="text-xs text-[#D4A800]">{formatDate(edition.date)}</span>
+              <span className="text-xs text-[#1721d8]">{formatDate(edition.date)}</span>
             </div>
           </div>
           <div className="flex items-center gap-1">
             <button onClick={() => setIsZoomOpen(true)} className="p-2.5 rounded-full active:bg-white/20 transition-all duration-200 active:scale-95 hover:bg-white/10">
               <ZoomIn size={20} />
             </button>
-            <button onClick={() => setIsCropOpen(true)} className="p-2.5 rounded-full active:bg-[#D4A800]/20 transition-all duration-200 active:scale-95 hover:bg-[#D4A800]/10">
-              <Crop size={20} className="text-[#D4A800]" />
+            <button onClick={() => setIsCropOpen(true)} className="p-2.5 rounded-full active:bg-[#1721d8]/20 transition-all duration-200 active:scale-95 hover:bg-[#1721d8]/10">
+              <Crop size={20} className="text-[#1721d8]" />
             </button>
-            <button onClick={handleMobileEpaperShare} className="p-2.5 rounded-full active:bg-[#D4A800]/20 transition-all duration-200 active:scale-95 hover:bg-[#D4A800]/10">
-              <Share2 size={20} className="text-[#D4A800]" />
+            <button onClick={handleMobileEpaperShare} className="p-2.5 rounded-full active:bg-[#1721d8]/20 transition-all duration-200 active:scale-95 hover:bg-[#1721d8]/10">
+              <Share2 size={20} className="text-[#1721d8]" />
             </button>
           </div>
         </div>
@@ -855,12 +855,12 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
       {/* Desktop Toolbar */}
       <div className="hidden md:flex sticky top-0 z-40 bg-white border-b shadow-sm p-1.5 flex-nowrap items-center justify-between gap-2 overflow-x-auto no-scrollbar">
         <div className="flex items-center gap-1 text-sm shrink-0">
-          <div className="px-3 py-1.5 bg-gray-100 border font-bold text-[#D4A800] mr-2 rounded-sm shrink-0 uppercase tracking-tighter text-[10px]">
+          <div className="px-3 py-1.5 bg-gray-100 border font-bold text-[#1721d8] mr-2 rounded-sm shrink-0 uppercase tracking-tighter text-[10px]">
             {currentPage + 1} / {totalPages}
           </div>
           <button onClick={() => !isCropOpen && setCurrentPage(0)} disabled={currentPage === 0 || isCropOpen} className="px-3 py-1.5 border hover:bg-gray-50 bg-white disabled:opacity-30">&laquo; First</button>
           {pages.map((p, i) => (
-            <button key={p.pageNum} onClick={() => !isCropOpen && setCurrentPage(i)} onMouseEnter={() => !isCropOpen && handlePageHover(i)} className={`px-3 py-1.5 border ${i === currentPage ? 'bg-[#D4A800] text-white font-bold' : 'hover:bg-gray-50 bg-white'} ${isCropOpen ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isCropOpen}>{p.pageNum}</button>
+            <button key={p.pageNum} onClick={() => !isCropOpen && setCurrentPage(i)} onMouseEnter={() => !isCropOpen && handlePageHover(i)} className={`px-3 py-1.5 border ${i === currentPage ? 'bg-[#1721d8] text-white font-bold' : 'hover:bg-gray-50 bg-white'} ${isCropOpen ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isCropOpen}>{p.pageNum}</button>
           ))}
           <button onClick={() => !isCropOpen && setCurrentPage(totalPages - 1)} disabled={currentPage === totalPages - 1 || isCropOpen} className="px-3 py-1.5 border hover:bg-gray-50 bg-white disabled:opacity-30">Last &raquo;</button>
         </div>
@@ -960,7 +960,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
               } ${isPageTurning ? 'w-16 opacity-100' : 'w-0 opacity-0'}`}
             style={{ background: 'transparent' }}
           />
-          {mainImageLoading && <div className="fixed inset-0 z-[100] flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-[#D4A800]" /></div>}
+          {mainImageLoading && <div className="fixed inset-0 z-[100] flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-[#1721d8]" /></div>}
           {highlightRect && highlightVisible && (
             <div
               className="absolute z-30 pointer-events-none border-2 border-red-500 border-dotted bg-red-200/50 animate-pulse shadow-[0_0_0_3px_rgba(255,0,0,0.15)]"
@@ -1031,7 +1031,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                 />
               </div>
               <div
-                className={`absolute border-2 ${isDragging ? 'border-[#D4A800]' : 'border-white'} transition-colors`}
+                className={`absolute border-2 ${isDragging ? 'border-[#1721d8]' : 'border-white'} transition-colors`}
                 style={{
                   top: mobileCropLayout ? mobileCropLayout.cropTop : `${crop.y}%`,
                   left: mobileCropLayout ? mobileCropLayout.cropLeft : `${crop.x}%`,
@@ -1056,30 +1056,30 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
 
                 {/* Corner Resize Handles - Large touch targets */}
                 <div className="absolute -top-4 -left-4 w-10 h-10 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 'nw')}>
-                  <div className={`w-6 h-6 rounded-full border-2 ${isDragging ? 'bg-[#D4A800]' : 'bg-white'} shadow-lg`} />
+                  <div className={`w-6 h-6 rounded-full border-2 ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                 </div>
                 <div className="absolute -top-4 -right-4 w-10 h-10 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 'ne')}>
-                  <div className={`w-6 h-6 rounded-full border-2 ${isDragging ? 'bg-[#D4A800]' : 'bg-white'} shadow-lg`} />
+                  <div className={`w-6 h-6 rounded-full border-2 ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                 </div>
                 <div className="absolute -bottom-4 -left-4 w-10 h-10 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 'sw')}>
-                  <div className={`w-6 h-6 rounded-full border-2 ${isDragging ? 'bg-[#D4A800]' : 'bg-white'} shadow-lg`} />
+                  <div className={`w-6 h-6 rounded-full border-2 ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                 </div>
                 <div className="absolute -bottom-4 -right-4 w-10 h-10 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 'se')}>
-                  <div className={`w-6 h-6 rounded-full border-2 ${isDragging ? 'bg-[#D4A800]' : 'bg-white'} shadow-lg`} />
+                  <div className={`w-6 h-6 rounded-full border-2 ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                 </div>
 
                 {/* Edge Resize Handles */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-12 h-6 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 'n')}>
-                  <div className={`w-8 h-2 rounded-full ${isDragging ? 'bg-[#D4A800]' : 'bg-white'} shadow-lg`} />
+                  <div className={`w-8 h-2 rounded-full ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                 </div>
                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-12 h-6 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 's')}>
-                  <div className={`w-8 h-2 rounded-full ${isDragging ? 'bg-[#D4A800]' : 'bg-white'} shadow-lg`} />
+                  <div className={`w-8 h-2 rounded-full ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                 </div>
                 <div className="absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-12 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 'w')}>
-                  <div className={`w-2 h-8 rounded-full ${isDragging ? 'bg-[#D4A800]' : 'bg-white'} shadow-lg`} />
+                  <div className={`w-2 h-8 rounded-full ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                 </div>
                 <div className="absolute top-1/2 -right-3 -translate-y-1/2 w-6 h-12 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 'e')}>
-                  <div className={`w-2 h-8 rounded-full ${isDragging ? 'bg-[#D4A800]' : 'bg-white'} shadow-lg`} />
+                  <div className={`w-2 h-8 rounded-full ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                 </div>
               </div>
             </div>
@@ -1094,8 +1094,8 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                     key={`mobile-page-box-${p.pageNum}`}
                     onClick={() => setCurrentPage(i)}
                     className={`min-w-[34px] h-[34px] shrink-0 rounded-lg border text-xs font-bold transition-all active:scale-90 ${i === currentPage
-                        ? 'bg-[#D4A800] border-[#D4A800] text-black shadow-[0_0_10px_rgba(212,168,0,0.45)]'
-                        : 'bg-white/10 border-white/30 text-white'
+                      ? 'bg-[#1721d8] border-[#1721d8] text-white shadow-[0_0_10px_rgba(23,33,216,0.45)]'
+                      : 'bg-white/10 border-white/30 text-white'
                       }`}
                   >
                     {p.pageNum}
@@ -1112,8 +1112,8 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
         {/* Left Sidebar (Thumbnails) - Sticky */}
         <div className="w-48 shrink-0 bg-white border p-3 flex flex-col gap-3 sticky top-[52px] max-h-[calc(100vh-60px)] overflow-y-auto">
           {pages.map((p, i) => (
-            <button key={p.pageNum} onClick={() => setCurrentPage(i)} className={`border p-2 group ${i === currentPage ? 'ring-2 ring-[#D4A800]' : ''}`}>
-              <div className={`text-xs font-bold py-1 mb-2 ${i === currentPage ? 'bg-[#D4A800] text-white' : 'bg-gray-100'}`}>PAGE {p.pageNum}</div>
+            <button key={p.pageNum} onClick={() => setCurrentPage(i)} className={`border p-2 group ${i === currentPage ? 'ring-2 ring-[#1721d8]' : ''}`}>
+              <div className={`text-xs font-bold py-1 mb-2 ${i === currentPage ? 'bg-[#1721d8] text-white' : 'bg-gray-100'}`}>PAGE {p.pageNum}</div>
               <div className="relative aspect-[2/3] w-full bg-gray-100">
                 <Image
                   src={getProxyUrl(p.previewUrl || p.url, p.pageNum)}
@@ -1132,7 +1132,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
           {/* Desktop Reader Header */}
           <div className="bg-[#2D2D2D] text-white px-4 py-2.5 text-sm flex justify-between items-center shrink-0 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <span className="font-bold text-[#D4A800] tracking-wide uppercase">Yellow Singam Telugu Daily</span>
+              <span className="font-bold text-white tracking-wide uppercase">Andhrapatrika Telugu Daily</span>
               <span className="text-white/40">|</span>
               <span className="font-medium">{formatDate(edition.date)}</span>
             </div>
@@ -1152,7 +1152,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
             {/* Loader */}
             {mainImageLoading && (
               <div className="absolute inset-0 z-[45] flex flex-col items-center justify-center bg-gray-50/80 backdrop-blur-[2px]">
-                <Loader2 className="w-12 h-12 animate-spin text-[#D4A800]" />
+                <Loader2 className="w-12 h-12 animate-spin text-[#1721d8]" />
                 <span className="mt-4 text-xs font-bold text-gray-400 uppercase tracking-widest animate-pulse">Loading Page...</span>
               </div>
             )}
@@ -1172,7 +1172,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                     setMainImageError(false);
                     setMainImageRetry(prev => prev + 1);
                   }}
-                  className="flex items-center gap-2 bg-[#D4A800] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-[#b89200] transition-colors shadow-lg active:scale-95"
+                  className="flex items-center gap-2 bg-[#1721d8] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-[#121aa8] transition-colors shadow-lg active:scale-95"
                 >
                   <RotateCcw size={18} />
                   Retry Now
@@ -1195,7 +1195,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                   <Image
                     key={`desktop-main-${currentPage}-${mainImageRetry}`}
                     src={getCurrentPageProxyUrl()}
-                    alt={`Yellow Singam Page ${currentPage + 1}`}
+                    alt={`Andhrapatrika Page ${currentPage + 1}`}
                     fill
                     className="object-contain"
                     referrerPolicy="no-referrer"
@@ -1314,7 +1314,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                   onClick={() => {
                     if (navigator.share) {
                       navigator.share({
-                        title: edition?.name || 'Yellow Singam ePaper Clip',
+                        title: edition?.name || 'Andhrapatrika ePaper Clip',
                         text: 'Check out this ePaper clip',
                         url: generatedLink
                       }).catch(err => console.log('Share failed:', err));
@@ -1393,7 +1393,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                     handleClipDownload(pageUrl, displayDate, pageNum);
                   }}
                   disabled={isDownloading}
-                  className="bg-[#D4A800] text-black p-3 rounded-sm hover:bg-[#c29800] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="bg-[#1721d8] text-white p-3 rounded-sm hover:bg-[#121aa8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   title="Download Clip"
                 >
                   {isDownloading ? (
@@ -1411,7 +1411,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
               {/* Branded Preview Card */}
               <div className="flex justify-center p-2">
                 <div
-                  className="bg-white border-[8px] border-[#D4A800] shadow-xl inline-flex flex-col max-w-full"
+                  className="bg-white border-[8px] border-[#1721d8] shadow-xl inline-flex flex-col max-w-full"
                 >
                   {/* Card Header - Banner Style with Text */}
                   <div className="bg-white flex flex-col border-b border-gray-100">
@@ -1419,7 +1419,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                     <div className="p-3 flex items-center justify-center bg-white">
                       <img
                         src="/ys-logo.jpeg"
-                        alt="Yellow Singam"
+                        alt="Andhrapatrika"
                         className="h-12 w-auto object-contain"
                       />
                     </div>
@@ -1427,7 +1427,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                       {formatDate(edition?.date)} | Page {currentPage + 1}
                     </div>
                     <div className="pb-2 px-3 text-center text-[9px] font-medium tracking-tight text-[#2D2D2D]/70">
-                      https://epaper.yellowsingam.com/
+                      https://andhrapatrikaa.com/
                     </div>
                     <div className="h-[0.5px] bg-black/10 w-full" />
                   </div>
@@ -1445,7 +1445,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                         />
                         {clipPreviewLoading && (
                           <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-                            <Loader2 size={28} className="text-[#D4A800] animate-spin" />
+                            <Loader2 size={28} className="text-[#1721d8] animate-spin" />
                           </div>
                         )}
                       </>
@@ -1458,11 +1458,11 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                   </div>
 
                   {/* Card Footer */}
-                  <div className="bg-[#D4A800] p-2 text-center">
-                    <div className="text-[#2D2D2D] font-bold text-[10px] uppercase tracking-tighter">
-                      epaper.yellowsingam.com | {formatDate(edition?.date)} | P: {currentPage + 1} | CID: {currentClipId}
+                  <div className="bg-[#1721d8] p-2 text-center">
+                    <div className="text-white font-bold text-[10px] uppercase tracking-tighter">
+                      andhrapatrikaa.com | {formatDate(edition?.date)} | P: {currentPage + 1} | CID: {currentClipId}
                     </div>
-                    <div className="text-[#2D2D2D]/90 text-[8px] font-medium mt-0.5">
+                    <div className="text-white/90 text-[8px] font-medium mt-0.5">
                       For more details, visit our ePaper
                     </div>
                   </div>
@@ -1480,7 +1480,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                   />
                   <Copy
                     size={18}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-[#D4A800]"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-[#1721d8]"
                     onClick={() => {
                       navigator.clipboard.writeText(generatedLink);
                       alert('Link copied!');
@@ -1559,14 +1559,14 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                 </button>
                 <div className="flex flex-col">
                   <span className="font-bold text-sm">Page {currentPage + 1} of {totalPages}</span>
-                  <span className="text-[10px] text-[#D4A800] uppercase font-bold tracking-widest">{formatDate(edition.date)}</span>
+                  <span className="text-[10px] text-[#1721d8] uppercase font-bold tracking-widest">{formatDate(edition.date)}</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsMiniMapMinimized(!isMiniMapMinimized)}
-                  className={`p-2 rounded-full transition-colors ${isMiniMapMinimized ? 'text-white/40' : 'text-[#D4A800] bg-[#D4A800]/10'}`}
+                  className={`p-2 rounded-full transition-colors ${isMiniMapMinimized ? 'text-white/40' : 'text-[#1721d8] bg-[#1721d8]/10'}`}
                   title="Toggle Mini-map"
                 >
                   <Map size={20} />
@@ -1644,7 +1644,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                     </div>
                     {/* Viewport Indicator */}
                     <div
-                      className="absolute border-2 border-[#D4A800] bg-[#D4A800]/10 cursor-move"
+                      className="absolute border-2 border-[#1721d8] bg-[#1721d8]/10 cursor-move"
                       style={{
                         top: `${miniMap.top}%`,
                         left: `${miniMap.left}%`,
@@ -1686,8 +1686,8 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                     <button
                       onClick={handleResetToNormalView}
                       className={`p-2.5 transition-all ${isAnyZoomActive
-                          ? 'rounded-lg text-white bg-white/12 hover:bg-white/20'
-                          : 'rounded-full text-[#D4A800] bg-[#D4A800]/10'
+                        ? 'rounded-lg text-white bg-white/12 hover:bg-white/20'
+                        : 'rounded-full text-[#1721d8] bg-[#1721d8]/10'
                         }`}
                     >
                       {isAnyZoomActive ? <Minimize2 size={18} /> : <Maximize size={18} />}

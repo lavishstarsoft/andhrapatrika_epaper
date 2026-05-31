@@ -1,4 +1,4 @@
-import type {Metadata, Viewport} from 'next';
+import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import './globals.css'; // Global styles
 import Header from '@/components/Header';
@@ -7,12 +7,12 @@ import BottomNav from '@/components/BottomNav';
 import Footer from '@/components/Footer';
 import Providers from '@/components/Providers';
 
-const siteUrl = process.env.NEXTAUTH_URL || 'https://yellowsingam.com';
+const siteUrl = process.env.NEXTAUTH_URL || 'https://andhrapatrikaa.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: 'Yellow Singam - Telugu Daily ePaper',
-  description: 'Read Yellow Singam Telugu Daily ePaper online.',
+  title: 'Andhrapatrika - Telugu Daily ePaper',
+  description: 'Read Andhrapatrika Telugu Daily ePaper online.',
   icons: {
     icon: [{ url: '/logo.png', type: 'image/png' }],
     apple: [{ url: '/logo.png', type: 'image/png' }],
@@ -21,18 +21,18 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Yellow Singam',
+    title: 'Andhrapatrika',
   },
   openGraph: {
-    title: 'Yellow Singam - Telugu Daily ePaper',
-    description: 'Read Yellow Singam Telugu Daily ePaper online.',
+    title: 'Andhrapatrika - Telugu Daily ePaper',
+    description: 'Read Andhrapatrika Telugu Daily ePaper online.',
     images: ['/logo.png'],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Yellow Singam - Telugu Daily ePaper',
-    description: 'Read Yellow Singam Telugu Daily ePaper online.',
+    title: 'Andhrapatrika - Telugu Daily ePaper',
+    description: 'Read Andhrapatrika Telugu Daily ePaper online.',
     images: ['/logo.png'],
   },
 };
@@ -43,10 +43,10 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#D4A800',
+  themeColor: '#1721d8',
 };
 
-export default function RootLayout({children}: {children: React.ReactNode}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>

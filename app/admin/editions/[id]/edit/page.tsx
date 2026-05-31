@@ -56,13 +56,6 @@ interface Edition {
   pageCount: number;
 }
 
-const categories = [
-  { id: 'main', name: 'Main Edition' },
-  { id: 'city', name: 'City Edition' },
-  { id: 'sports', name: 'Sports Edition' },
-  { id: 'business', name: 'Business Edition' },
-];
-
 const statuses = [
   { id: 'published', name: 'PUBLISHED', color: 'bg-green-500' },
   { id: 'scheduled', name: 'SCHEDULED', color: 'bg-blue-500' },
@@ -165,6 +158,29 @@ export default function EditEdition({ params }: { params: Promise<{ id: string }
     category: 'main',
     status: 'published'
   });
+
+  const [categories, setCategories] = useState<{ id: string; name: string; isActive: boolean }[]>([]);
+
+  // Fetch active categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        const data = await response.json();
+        if (data.success) {
+          const cats = data.categories.map((cat: any) => ({
+            id: cat.slug,
+            name: cat.name,
+            isActive: cat.isActive,
+          }));
+          setCategories(cats);
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -511,7 +527,7 @@ export default function EditEdition({ params }: { params: Promise<{ id: string }
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3b5bdb]/20 focus:border-[#3b5bdb] transition-all appearance-none cursor-pointer"
                 >
-                  {categories.map(cat => (
+                  {categories.filter(cat => cat.isActive || cat.id === formData.category).map(cat => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>

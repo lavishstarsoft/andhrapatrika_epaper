@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Upload, 
@@ -35,13 +35,6 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
-const categories = [
-  { id: 'main', name: 'Main Edition' },
-  { id: 'city', name: 'City Edition' },
-  { id: 'sports', name: 'Sports Edition' },
-  { id: 'business', name: 'Business Edition' },
-];
 
 const statuses = [
   { id: 'live', name: 'LIVE NOW', color: 'bg-green-500' },
@@ -152,6 +145,7 @@ function SortableItem({ id, index, preview, uploadType, onRemove }: SortableItem
 
 export default function PublishEdition() {
   const router = useRouter();
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     alias: '',
@@ -162,6 +156,37 @@ export default function PublishEdition() {
     status: '',
     uploadType: '',
   });
+
+  // Fetch active categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        const data = await response.json();
+        if (data.success) {
+          const activeCats = data.categories
+            .filter((cat: any) => cat.isActive)
+            .map((cat: any) => ({
+              id: cat.slug,
+              name: cat.name,
+            }));
+          setCategories(activeCats);
+          if (activeCats.length > 0) {
+            setFormData(prev => {
+              const hasMain = activeCats.some((c: any) => c.id === 'main');
+              return {
+                ...prev,
+                category: hasMain ? 'main' : activeCats[0].id
+              };
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -389,37 +414,42 @@ export default function PublishEdition() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
-    if (name === 'date') {
-      const longDate = formatLongDateForTitle(value);
-      const shortDate = formatDdMmYyyy(value);
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
 
-      if (!longDate || !shortDate) {
-        setFormData((prev) => ({ ...prev, date: value }));
-        return;
+      // If either date or category changes, re-calculate the auto-filled fields
+      if (name === 'date' || name === 'category') {
+        const activeDate = name === 'date' ? value : prev.date;
+        const activeCategory = name === 'category' ? value : prev.category;
+
+        if (activeDate) {
+          const longDate = formatLongDateForTitle(activeDate);
+          const shortDate = formatDdMmYyyy(activeDate);
+
+          if (longDate && shortDate) {
+            const categoryObj = categories.find((c) => c.id === activeCategory);
+            const categoryName = categoryObj ? categoryObj.name : '';
+
+            // Dynamic format: "Andhrapatrika Vija Main Telugu Daily - May 31 2026"
+            const autoName = categoryName
+              ? `Andhrapatrika ${categoryName} Telugu Daily - ${longDate}`
+              : `Andhrapatrika Telugu Daily - ${longDate}`;
+
+            updated.name = autoName;
+            updated.metaTitle = autoName;
+            updated.metaDescription = `Read todays ${
+              categoryName ? `Andhrapatrika ${categoryName}` : 'Andhrapatrika'
+            } Telugu Daily from ${shortDate} for the latest news and updates. Stay informed on local, national, and international stories all in one place.`;
+            updated.alias = slugify(autoName);
+          }
+        }
+      } else if (name === 'name') {
+        // Auto-generate alias from name if name changed directly.
+        updated.alias = slugify(value);
       }
 
-      const autoName = `Yellow Singam Telugu Daily - ${longDate}`;
-      const autoMetaTitle = autoName;
-      const autoMetaDescription = `Read todays Yellowsingam ePaper from ${shortDate} for the latest news and updates. Stay informed on local, national, and international stories all in one place.`;
-
-      setFormData((prev) => ({
-        ...prev,
-        date: value,
-        name: autoName,
-        metaTitle: autoMetaTitle,
-        metaDescription: autoMetaDescription,
-        alias: slugify(autoName),
-      }));
-      return;
-    }
-
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Auto-generate alias from name.
-    if (name === 'name') {
-      const alias = slugify(value);
-      setFormData((prev) => ({ ...prev, alias }));
-    }
+      return updated;
+    });
   };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {

@@ -1,11 +1,11 @@
 {
-  "name": "Yellow Singam Telugu Daily",
-  "short_name": "Yellow Singam",
-  "description": "Read Yellow Singam Telugu Daily ePaper online",
+  "name": "Andhrapatrika Telugu Daily",
+  "short_name": "Andhrapatrika",
+  "description": "Read Andhrapatrika Telugu Daily ePaper online",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#D4A800",
+  "theme_color": "#1721d8",
   "orientation": "portrait-primary",
   "icons": [
     {

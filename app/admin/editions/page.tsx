@@ -77,6 +77,27 @@ export default function ManageEditions() {
     fetchEditions();
   }, [fetchEditions]);
 
+  const [categories, setCategories] = useState<{ slug: string; name: string }[]>([]);
+
+  // Fetch categories for filters
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        const data = await response.json();
+        if (data.success) {
+          setCategories(data.categories.map((cat: any) => ({
+            slug: cat.slug,
+            name: cat.name
+          })));
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   // Delete edition
   const handleDelete = async (edition: Edition) => {
     setDeleting(true);
@@ -97,6 +118,11 @@ export default function ManageEditions() {
     } finally {
       setDeleting(false);
     }
+  };
+
+  const getCategoryName = (categorySlug: string) => {
+    const cat = categories.find(c => c.slug === categorySlug);
+    return cat ? cat.name : (categorySlug ? categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1) : 'Main');
   };
 
   const filteredEditions = editions.filter(edition => {
@@ -262,10 +288,9 @@ export default function ManageEditions() {
             className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3b5bdb]/20 focus:border-[#3b5bdb] appearance-none cursor-pointer min-w-[150px]"
           >
             <option value="all">All Categories</option>
-            <option value="main">Main Edition</option>
-            <option value="city">City Edition</option>
-            <option value="sports">Sports Edition</option>
-            <option value="business">Business Edition</option>
+            {categories.map((cat) => (
+              <option key={cat.slug} value={cat.slug}>{cat.name}</option>
+            ))}
           </select>
         </div>
       </div>
@@ -333,7 +358,7 @@ export default function ManageEditions() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-gray-600 capitalize">{edition.category || 'Main'}</span>
+                        <span className="text-sm text-gray-600">{getCategoryName(edition.category)}</span>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-sm text-gray-600">{edition.pageCount || edition.pages?.length || 0} pages</span>

@@ -35,17 +35,21 @@ interface GlobalSettings {
 }
 
 const getHomeData = unstable_cache(
-  async (page: number, pageSize: number) => {
+  async (page: number, pageSize: number, category?: string) => {
     try {
       const client = await clientPromise;
       const db = client.db('yellowsingam_epaper');
 
-      const filter = {
+      const filter: any = {
         $or: [
           { status: 'published' },
           { status: 'scheduled', date: { $lte: new Date() } },
         ],
       };
+
+      if (category && category !== 'all') {
+        filter.category = category;
+      }
 
       const [editionsRaw, settingsRaw, totalCount] = await Promise.all([
         db
@@ -57,6 +61,7 @@ const getHomeData = unstable_cache(
               date: 1,
               pages: { $slice: 1 },
               status: 1,
+              category: 1,
             },
           })
           .sort({ date: -1 })
@@ -89,6 +94,7 @@ const getHomeData = unstable_cache(
             : String(edition.date || ''),
         pages: Array.isArray(edition.pages) ? edition.pages : [],
         status: edition.status || '',
+        category: edition.category || 'main',
       }));
 
       return {
@@ -112,15 +118,117 @@ const getHomeData = unstable_cache(
 export default async function Home({
   searchParams,
 }: {
-  searchParams?: Promise<{ page?: string }>;
+  searchParams?: Promise<{ page?: string; category?: string }>;
 }) {
   const pageSize = 12;
   const resolvedSearchParams = (await searchParams) || {};
   const currentPage = Math.max(1, Number(resolvedSearchParams.page || 1));
-  const { editions, settings, totalCount } = await getHomeData(
-    currentPage,
-    pageSize
-  );
+  const currentCategory = resolvedSearchParams.category || 'all';
+
+  const client = await clientPromise;
+  const db = client.db('yellowsingam_epaper');
+
+  // Fetch settings directly
+  const settingsRaw = await db.collection('settings').findOne({ type: 'global' });
+  const settings = (settingsRaw || {}) as GlobalSettings;
+
+  // Fetch active categories from DB
+  const categoriesRaw = await db.collection('categories').find({ isActive: true }).sort({ createdAt: 1 }).toArray();
+  let categories = categoriesRaw.map(cat => ({
+    _id: String(cat._id),
+    name: cat.name,
+    slug: cat.slug,
+  }));
+
+  if (categories.length === 0) {
+    categories = [
+      { _id: '1', name: 'Main Edition', slug: 'main' },
+      { _id: '2', name: 'City Edition', slug: 'city' },
+      { _id: '3', name: 'Sports Edition', slug: 'sports' },
+      { _id: '4', name: 'Business Edition', slug: 'business' },
+    ];
+  }
+
+  let editions: Edition[] = [];
+  let totalCount = 0;
+  let categoriesWithEditions: { _id: string; name: string; slug: string; editions: Edition[] }[] = [];
+
+  if (currentCategory === 'all') {
+    categoriesWithEditions = await Promise.all(
+      categories.map(async (cat) => {
+        const categoryFilter: any = {
+          $or: [
+            { status: 'published' },
+            { status: 'scheduled', date: { $lte: new Date() } },
+          ],
+        };
+
+        if (cat.slug === 'main') {
+          categoryFilter.$and = [
+            {
+              $or: [
+                { category: 'main' },
+                { category: { $exists: false } },
+                { category: null },
+                { category: '' }
+              ]
+            }
+          ];
+        } else {
+          categoryFilter.category = cat.slug;
+        }
+
+        const editionsRaw = await db
+          .collection('editions')
+          .find(categoryFilter, {
+            projection: {
+              name: 1,
+              alias: 1,
+              date: 1,
+              pages: { $slice: 1 },
+              status: 1,
+              category: 1,
+            },
+          })
+          .sort({ date: -1 })
+          .limit(12) // Limit to 12 editions per category in Home grid list
+          .toArray();
+
+        const catEditions: Edition[] = editionsRaw.map((edition: any) => ({
+          _id: String(edition._id),
+          name: edition.name || '',
+          alias: edition.alias || '',
+          date:
+            edition.date instanceof Date
+              ? edition.date.toISOString()
+              : String(edition.date || ''),
+          pages: Array.isArray(edition.pages) ? edition.pages : [],
+          status: edition.status || '',
+          category: edition.category || 'main',
+        }));
+
+        return {
+          _id: cat._id,
+          name: cat.name,
+          slug: cat.slug,
+          editions: catEditions,
+        };
+      })
+    );
+
+    // Only display categories that have editions
+    categoriesWithEditions = categoriesWithEditions.filter(group => group.editions.length > 0);
+  } else {
+    // If specific category selected, fetch dynamic paginated list
+    const result = await getHomeData(
+      currentPage,
+      pageSize,
+      currentCategory
+    );
+    editions = result.editions;
+    totalCount = result.totalCount;
+  }
+
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const safePage = Math.min(currentPage, totalPages);
 
@@ -145,11 +253,10 @@ export default async function Home({
     return diffDays <= 2;
   };
 
-const getProxyUrl = (rawUrl: string) => {
-  if (!rawUrl) return '';
-  // Serve directly from CDN source to remove app proxy latency.
-  return rawUrl;
-};
+  const getProxyUrl = (rawUrl: string) => {
+    if (!rawUrl) return '';
+    return rawUrl;
+  };
 
   const renderAd = () => {
     if (!settings?.adEnabled) return null;
@@ -184,96 +291,169 @@ const getProxyUrl = (rawUrl: string) => {
       {/* Mobile Section Header - App Style */}
       <div className="md:hidden flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-1 h-6 bg-[#D4A800] rounded-full"></div>
+          <div className="w-1 h-6 bg-[#1721d8] rounded-full"></div>
           <h2 className="text-lg font-bold text-gray-900">Latest Editions</h2>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-            {editions.length} issues
+            {currentCategory === 'all'
+              ? `${categoriesWithEditions.reduce((sum, g) => sum + g.editions.length, 0)} issues`
+              : `${editions.length} issues`
+            }
           </span>
         </div>
-      </div>
-      
-      {/* Desktop Section Header */}
-      <div className="hidden md:inline-block bg-[#D4A800] text-white px-4 py-2 font-bold mb-4 rounded-sm shadow-sm">
-        {settings?.siteName || 'Yellow Singam Telugu Daily'}
       </div>
       
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Main Content - Grid */}
         <div className="flex-1">
-          {editions.length === 0 ? (
-            <div className="text-center py-20">
-              <CalendarIcon size={48} className="mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">No editions available yet</p>
-              <p className="text-gray-400 text-sm mt-2">Check back soon!</p>
-            </div>
-          ) : (
-            <>
-              {/* Mobile: 2 column card grid with Material Design style */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
-                {editions.map((edition, index) => (
-                  <Link 
-                    href={`/edition/${edition.alias}`} 
-                    key={edition._id} 
-                    className="group block bg-white rounded-xl md:rounded-sm overflow-hidden elevation-1 md:shadow-sm active:scale-[0.98] transition-all duration-150 touch-ripple relative"
-                  >
-                    {/* New badge for mobile */}
-                    {isNew(edition.date) && (
-                      <div className="md:hidden absolute top-2 left-2 z-10 flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        <Flame size={10} />
-                        NEW
-                      </div>
-                    )}
-                    
-                    <div className="relative aspect-[2/3] w-full overflow-hidden bg-gray-100" suppressHydrationWarning>
-                      {edition.pages && edition.pages[0]?.url ? (
-                        <Image
-                          src={getProxyUrl(edition.pages[0].previewUrl || edition.pages[0].url)}
-                          alt={edition.name}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                          priority={index < 2}
-                          referrerPolicy="no-referrer"
-                          loading={index < 2 ? 'eager' : 'lazy'}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                          <CalendarIcon size={32} className="text-gray-400" />
+          {currentCategory === 'all' ? (
+            /* Home page: show categories one by one */
+            categoriesWithEditions.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-xl border border-gray-100 shadow-sm">
+                <CalendarIcon size={48} className="mx-auto text-gray-300 mb-4" />
+                <p className="text-gray-500">No editions available yet</p>
+                <p className="text-gray-400 text-sm mt-2">Check back soon!</p>
+              </div>
+            ) : (
+              categoriesWithEditions.map((group) => (
+                <div key={group.slug} className="mb-10">
+                  {/* Category Title with divider line */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <h2 className="text-sm md:text-base font-bold text-[#1721d8] uppercase tracking-wider">
+                      {group.name}
+                    </h2>
+                    <div className="flex-1 h-[2px] bg-gradient-to-r from-gray-200 to-transparent"></div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
+                    {group.editions.map((edition, index) => (
+                      <Link 
+                        href={`/edition/${edition.alias}`} 
+                        key={edition._id} 
+                        className="group block bg-white rounded-xl md:rounded-sm overflow-hidden elevation-1 md:shadow-sm active:scale-[0.98] transition-all duration-150 touch-ripple relative"
+                      >
+                        {isNew(edition.date) && (
+                          <div className="md:hidden absolute top-2 left-2 z-10 flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            <Flame size={10} />
+                            NEW
+                          </div>
+                        )}
+                        
+                        <div className="relative aspect-[2/3] w-full overflow-hidden bg-gray-100" suppressHydrationWarning>
+                          {edition.pages && edition.pages[0]?.url ? (
+                            <Image
+                              src={getProxyUrl(edition.pages[0].previewUrl || edition.pages[0].url)}
+                              alt={edition.name}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-300"
+                              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                              priority={index < 2}
+                              referrerPolicy="no-referrer"
+                              loading={index < 2 ? 'eager' : 'lazy'}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                              <CalendarIcon size={32} className="text-gray-400" />
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    
-                    {/* Mobile: Rounded bottom with date */}
-                    <div className="md:hidden p-3 bg-white">
-                      <div className="flex items-center gap-1.5 text-gray-700">
-                        <CalendarIcon size={14} className="text-[#D4A800]" />
-                        <span className="text-sm font-medium">{formatDate(edition.date)}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Desktop: Overlay style */}
-                    <div className="hidden md:flex absolute bottom-0 left-0 right-0 bg-black/70 text-white text-center py-1.5 text-sm items-center justify-center gap-2 backdrop-blur-sm">
-                      <CalendarIcon size={14} />
-                      {formatDate(edition.date)}
-                    </div>
-                  </Link>
-                ))}
+                        
+                        {/* Mobile: Rounded bottom with date */}
+                        <div className="md:hidden p-3 bg-white">
+                          <div className="flex items-center gap-1.5 text-gray-700">
+                            <CalendarIcon size={14} className="text-[#1721d8]" />
+                            <span className="text-sm font-medium">{formatDate(edition.date)}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Desktop: Overlay style */}
+                        <div className="hidden md:flex absolute bottom-0 left-0 right-0 bg-black/70 text-white text-center py-1.5 text-sm items-center justify-center gap-2 backdrop-blur-sm">
+                          <CalendarIcon size={14} />
+                          {formatDate(edition.date)}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )
+          ) : (
+            /* Specific Category filtered view with pagination */
+            <div>
+              {/* Category Title with divider line */}
+              <div className="flex items-center gap-3 mb-4">
+                <h2 className="text-sm md:text-base font-bold text-[#1721d8] uppercase tracking-wider">
+                  {categories.find(c => c.slug === currentCategory)?.name || currentCategory}
+                </h2>
+                <div className="flex-1 h-[2px] bg-gradient-to-r from-gray-200 to-transparent"></div>
               </div>
 
-              {/* Pagination - Hidden on mobile */}
-              <div className="hidden md:block">
-                <Pagination currentPage={safePage} totalPages={totalPages} />
-              </div>
-              
-              {/* Mobile: Load More Button */}
-              <div className="md:hidden mt-6 flex justify-center">
-                <button className="flex items-center gap-2 bg-white text-[#D4A800] border-2 border-[#D4A800] px-6 py-3 rounded-[10px] font-semibold text-sm active:bg-[#FFF3C4] transition-colors touch-ripple elevation-1">
-                  Load More Editions
-                </button>
-              </div>
-            </>
+              {editions.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-xl border border-gray-100 shadow-sm">
+                  <CalendarIcon size={48} className="mx-auto text-gray-300 mb-4" />
+                  <p className="text-gray-500 font-medium">No editions available in this category yet</p>
+                  <p className="text-gray-400 text-sm mt-1">Check back soon!</p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
+                    {editions.map((edition, index) => (
+                      <Link 
+                        href={`/edition/${edition.alias}`} 
+                        key={edition._id} 
+                        className="group block bg-white rounded-xl md:rounded-sm overflow-hidden elevation-1 md:shadow-sm active:scale-[0.98] transition-all duration-150 touch-ripple relative"
+                      >
+                        {isNew(edition.date) && (
+                          <div className="md:hidden absolute top-2 left-2 z-10 flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            <Flame size={10} />
+                            NEW
+                          </div>
+                        )}
+                        
+                        <div className="relative aspect-[2/3] w-full overflow-hidden bg-gray-100" suppressHydrationWarning>
+                          {edition.pages && edition.pages[0]?.url ? (
+                            <Image
+                              src={getProxyUrl(edition.pages[0].previewUrl || edition.pages[0].url)}
+                              alt={edition.name}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-300"
+                              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                              priority={index < 2}
+                              referrerPolicy="no-referrer"
+                              loading={index < 2 ? 'eager' : 'lazy'}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                              <CalendarIcon size={32} className="text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Mobile: Rounded bottom with date */}
+                        <div className="md:hidden p-3 bg-white">
+                          <div className="flex items-center gap-1.5 text-gray-700">
+                            <CalendarIcon size={14} className="text-[#1721d8]" />
+                            <span className="text-sm font-medium">{formatDate(edition.date)}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Desktop: Overlay style */}
+                        <div className="hidden md:flex absolute bottom-0 left-0 right-0 bg-black/70 text-white text-center py-1.5 text-sm items-center justify-center gap-2 backdrop-blur-sm">
+                          <CalendarIcon size={14} />
+                          {formatDate(edition.date)}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+
+                  {/* Pagination - Hidden on mobile */}
+                  <div className="hidden md:block mt-6">
+                    <Pagination currentPage={safePage} totalPages={totalPages} />
+                  </div>
+                </>
+              )}
+            </div>
           )}
 
           {/* Mobile Ad Render (Below Editions) */}
@@ -283,7 +463,7 @@ const getProxyUrl = (rawUrl: string) => {
         </div>
 
         {/* Sidebar - Calendar & Ads (Hidden on Mobile) */}
-        <div className="hidden lg:flex w-[240px] shrink-0 lg:sticky lg:top-4 self-start flex-col gap-4">
+        <div className="hidden lg:flex w-[240px] shrink-0 lg:sticky lg:top-[140px] self-start flex-col gap-4">
           <EditionCalendar />
 
           {/* Right Sidebar Ad Space */}

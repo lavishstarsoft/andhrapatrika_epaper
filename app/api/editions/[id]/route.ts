@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
-import { deleteFromR2 } from '@/lib/r2';
+import { deleteFromR2, resolveMediaUrl } from '@/lib/r2';
+
 
 // GET single edition by ID
 export async function GET(
@@ -22,6 +23,16 @@ export async function GET(
     
     if (!edition) {
       return NextResponse.json({ error: 'Edition not found' }, { status: 404 });
+    }
+
+    if (edition) {
+      if (edition.pages && Array.isArray(edition.pages)) {
+        edition.pages = edition.pages.map((page: any) => ({
+          ...page,
+          url: resolveMediaUrl(page.url),
+          previewUrl: resolveMediaUrl(page.previewUrl),
+        }));
+      }
     }
 
     return NextResponse.json({ edition });

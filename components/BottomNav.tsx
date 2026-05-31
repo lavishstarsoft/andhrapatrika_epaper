@@ -53,8 +53,8 @@ export default function BottomNav() {
 
   const handleShare = async () => {
     const shareData = {
-      title: 'Yellow Singam Telugu Daily',
-      text: 'చదవండి Yellow Singam Telugu Daily ePaper ఆన్‌లైన్‌లో',
+      title: 'Andhrapatrika Telugu Daily',
+      text: 'చదవండి Andhrapatrika Telugu Daily ePaper ఆన్‌లైన్‌లో',
       url: window.location.href,
     };
 
@@ -296,10 +296,10 @@ export default function BottomNav() {
             )}
             
             {/* Month Navigation */}
-            <div className="flex items-center justify-between bg-[#FFF3C4] p-3 mb-4 rounded-xl">
+            <div className="flex items-center justify-between bg-[#1721d8]/10 p-3 mb-4 rounded-xl">
               <button 
                 onClick={goToPrevMonth}
-                className="p-2 hover:bg-[#D4A800]/20 rounded-full active:scale-95 transition-all"
+                className="p-2 hover:bg-[#1721d8]/20 rounded-full active:scale-95 transition-all"
               >
                 <ChevronLeft size={20} className="text-[#2D2D2D]" />
               </button>
@@ -308,7 +308,7 @@ export default function BottomNav() {
               </span>
               <button 
                 onClick={goToNextMonth}
-                className="p-2 hover:bg-[#D4A800]/20 rounded-full active:scale-95 transition-all"
+                className="p-2 hover:bg-[#1721d8]/20 rounded-full active:scale-95 transition-all"
               >
                 <ChevronRight size={20} className="text-[#2D2D2D]" />
               </button>
@@ -346,12 +346,12 @@ export default function BottomNav() {
                     onClick={() => !future && handleDateClick(day)}
                     disabled={loading || future}
                     className={`p-2 text-sm rounded-xl transition-all active:scale-95 ${
-                      isToday 
-                        ? 'bg-[#D4A800] text-white font-bold shadow-lg' 
-                        : future
-                          ? 'bg-gray-50 text-gray-300 cursor-not-allowed opacity-50'
-                          : 'bg-gray-50 text-gray-700 hover:bg-[#FFF3C4]'
-                    } ${loading ? 'opacity-50' : ''}`}
+                    isToday 
+                      ? 'bg-[#1721d8] text-white font-bold shadow-lg' 
+                      : future
+                        ? 'bg-gray-50 text-gray-300 cursor-not-allowed opacity-50'
+                        : 'bg-gray-50 text-gray-700 hover:bg-[#1721d8]/15'
+                  } ${loading ? 'opacity-50' : ''}`}
                   >
                     {day}
                   </button>
@@ -364,7 +364,7 @@ export default function BottomNav() {
               <button 
                 onClick={handleTodayClick}
                 disabled={loading}
-                className="flex-1 py-3 bg-[#D4A800] text-white font-semibold rounded-xl active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-[#1721d8] text-white font-semibold rounded-xl active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <Loader2 size={20} className="animate-spin" />
@@ -393,12 +393,12 @@ export default function BottomNav() {
                 onClick={(e) => handleNavClick(item, e)}
                 className={`flex flex-col items-center justify-center flex-1 h-full touch-ripple transition-all duration-200 ${
                   isActive 
-                    ? 'text-[#D4A800]' 
+                    ? 'text-[#1721d8]' 
                     : 'text-gray-500 active:text-gray-700'
                 }`}
               >
                 <div className={`p-1.5 rounded-2xl transition-all duration-200 ${
-                  isActive ? 'bg-[#FFF3C4]' : ''
+                  isActive ? 'bg-[#1721d8]/10' : ''
                 }`}>
                   <Icon 
                     size={24} 

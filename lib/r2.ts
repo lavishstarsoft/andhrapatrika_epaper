@@ -24,9 +24,18 @@ export async function uploadToR2(
 
   await R2.send(command);
 
-  // Return public URL
-  return `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
+  // Return relative proxy URL
+  return `/api/media/${key}`;
 }
+
+export function resolveMediaUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  if (url.includes('.r2.cloudflarestorage.com/')) {
+    return url.replace(/^https:\/\/[^/]+\.r2\.cloudflarestorage\.com\//, '/api/media/');
+  }
+  return url;
+}
+
 
 export async function deleteFromR2(key: string): Promise<void> {
   const command = new DeleteObjectCommand({

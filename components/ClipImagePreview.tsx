@@ -14,7 +14,7 @@ export default function ClipImagePreview({ src }: ClipImagePreviewProps) {
     <div className="relative w-full">
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-          <Loader2 className="w-10 h-10 animate-spin text-[#D4A800]" />
+          <Loader2 className="w-10 h-10 animate-spin text-[#1721d8]" />
         </div>
       )}
       {/* eslint-disable-next-line @next/next/no-img-element */}

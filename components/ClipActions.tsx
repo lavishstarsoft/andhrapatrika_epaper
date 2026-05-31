@@ -27,7 +27,7 @@ export default function ClipActions({ shareUrl, downloadUrl, readUrl }: ClipActi
     try {
       const response = await fetch(downloadUrl);
       if (!response.ok) throw new Error('Download failed');
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -54,7 +54,7 @@ export default function ClipActions({ shareUrl, downloadUrl, readUrl }: ClipActi
           onClick={() => {
             if (navigator.share) {
               navigator.share({
-                title: 'Yellow Singam Clip',
+                title: 'Andhrapatrika Clip',
                 text: 'Check out this ePaper clip',
                 url: shareUrl,
               }).catch(() => undefined);
@@ -89,14 +89,14 @@ export default function ClipActions({ shareUrl, downloadUrl, readUrl }: ClipActi
           <Facebook size={22} />
         </button>
         <button
-          onClick={() => open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('Yellow Singam Clip')}`)}
+          onClick={() => open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('Andhrapatrika Clip')}`)}
           className="bg-black text-white p-3 rounded-sm hover:bg-gray-800 transition-colors"
           title="X (Twitter)"
         >
           <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l16 16M4 20L20 4" /></svg>
         </button>
         <button
-          onClick={() => open(`https://wa.me/?text=${encodeURIComponent(`Yellow Singam Clip ${shareUrl}`)}`)}
+          onClick={() => open(`https://wa.me/?text=${encodeURIComponent(`Andhrapatrika Clip ${shareUrl}`)}`)}
           className="bg-[#25D366] text-white p-3 rounded-sm hover:bg-green-600 transition-colors"
           title="WhatsApp"
         >
@@ -110,7 +110,7 @@ export default function ClipActions({ shareUrl, downloadUrl, readUrl }: ClipActi
           <Linkedin size={22} />
         </button>
         <button
-          onClick={() => open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('Yellow Singam Clip')}`)}
+          onClick={() => open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('Andhrapatrika Clip')}`)}
           className="bg-[#229ED9] text-white p-3 rounded-sm hover:bg-blue-500 transition-colors"
           title="Telegram"
         >
@@ -119,7 +119,7 @@ export default function ClipActions({ shareUrl, downloadUrl, readUrl }: ClipActi
         <button
           onClick={handleDownload}
           disabled={isDownloading}
-          className="bg-[#D4A800] text-black p-3 rounded-sm hover:bg-[#c29800] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          className="bg-[#1721d8] text-white p-3 rounded-sm hover:bg-[#121aa8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           title="Download Clip"
         >
           {isDownloading ? (
@@ -133,7 +133,7 @@ export default function ClipActions({ shareUrl, downloadUrl, readUrl }: ClipActi
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-center w-full">
         <a
           href={readUrl}
-          className="w-full sm:w-auto text-center bg-[#D4A800] text-black px-8 py-3.5 rounded-xl font-bold hover:bg-[#c29800] transition-all active:scale-95 shadow-lg shadow-[#D4A800]/20 flex items-center justify-center gap-2"
+          className="w-full sm:w-auto text-center bg-[#1721d8] text-white px-8 py-3.5 rounded-xl font-bold hover:bg-[#121aa8] transition-all active:scale-95 shadow-lg shadow-[#1721d8]/20 flex items-center justify-center gap-2"
         >
           <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
           Read Full Edition

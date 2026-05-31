@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  Palette, 
-  Sun, 
-  Moon, 
+import {
+  Palette,
+  Sun,
+  Moon,
   Monitor,
   Eye,
   Save,
@@ -18,7 +18,7 @@ export default function ThemeSetup() {
   const [previewTheme, setPreviewTheme] = useState('light');
 
   const [colors, setColors] = useState({
-    primary: '#D4A800',
+    primary: '#1721d8',
     secondary: '#2D2D2D',
     accent: '#3B5BDB',
     background: '#FFFFFF',
@@ -60,7 +60,7 @@ export default function ThemeSetup() {
 
   const resetToDefaults = () => {
     setColors({
-      primary: '#D4A800',
+      primary: '#1721d8',
       secondary: '#2D2D2D',
       accent: '#3B5BDB',
       background: '#FFFFFF',
@@ -110,15 +110,14 @@ export default function ThemeSetup() {
                 <button
                   key={theme.id}
                   onClick={() => setActiveTheme(theme.id)}
-                  className={`p-4 rounded-xl border-2 transition-all ${
-                    activeTheme === theme.id 
-                      ? 'border-[#3b5bdb] bg-[#e8edfc]' 
+                  className={`p-4 rounded-xl border-2 transition-all ${activeTheme === theme.id
+                      ? 'border-[#3b5bdb] bg-[#e8edfc]'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
-                  <theme.icon 
-                    size={24} 
-                    className={activeTheme === theme.id ? 'text-[#3b5bdb] mx-auto' : 'text-gray-500 mx-auto'} 
+                  <theme.icon
+                    size={24}
+                    className={activeTheme === theme.id ? 'text-[#3b5bdb] mx-auto' : 'text-gray-500 mx-auto'}
                   />
                   <p className={`font-semibold mt-2 ${activeTheme === theme.id ? 'text-[#3b5bdb]' : 'text-gray-800'}`}>
                     {theme.name}
@@ -209,52 +208,52 @@ export default function ThemeSetup() {
               <h2 className="text-lg font-bold text-gray-800">Live Preview</h2>
               <Eye size={20} className="text-gray-400" />
             </div>
-            
+
             {/* Preview Card */}
-            <div 
+            <div
               className="rounded-xl overflow-hidden border"
               style={{ backgroundColor: colors.background, borderColor: colors.surface }}
             >
               {/* Preview Header */}
-              <div 
+              <div
                 className="p-4"
                 style={{ backgroundColor: colors.secondary }}
               >
                 <div className="flex items-center gap-2">
-                  <div 
+                  <div
                     className="w-8 h-8 rounded-full"
                     style={{ backgroundColor: colors.primary }}
                   />
-                  <span className="text-white font-bold text-sm">Yellow Singam</span>
+                  <span className="text-white font-bold text-sm">Andhrapatrika</span>
                 </div>
               </div>
 
               {/* Preview Content */}
               <div className="p-4 space-y-3">
-                <div 
+                <div
                   className="w-full h-24 rounded-lg"
                   style={{ backgroundColor: colors.surface }}
                 />
-                <h3 
+                <h3
                   className="font-bold"
                   style={{ color: colors.text, fontFamily: fonts.heading }}
                 >
                   హెడ్‌లైన్ టెక్స్ట్
                 </h3>
-                <p 
+                <p
                   className="text-sm"
                   style={{ color: colors.textMuted, fontFamily: fonts.body }}
                 >
                   Sample body text appears here
                 </p>
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
                     style={{ backgroundColor: colors.accent }}
                   >
                     Primary Button
                   </button>
-                  <button 
+                  <button
                     className="px-3 py-1.5 rounded-lg text-xs font-medium"
                     style={{ backgroundColor: colors.surface, color: colors.text }}
                   >
@@ -266,19 +265,19 @@ export default function ThemeSetup() {
 
             {/* Status Colors */}
             <div className="mt-4 grid grid-cols-3 gap-2">
-              <div 
+              <div
                 className="p-2 rounded-lg text-center text-xs text-white font-medium"
                 style={{ backgroundColor: colors.success }}
               >
                 Success
               </div>
-              <div 
+              <div
                 className="p-2 rounded-lg text-center text-xs text-white font-medium"
                 style={{ backgroundColor: colors.warning }}
               >
                 Warning
               </div>
-              <div 
+              <div
                 className="p-2 rounded-lg text-center text-xs text-white font-medium"
                 style={{ backgroundColor: colors.error }}
               >

@@ -24,9 +24,9 @@ async function getEdition(alias: string): Promise<Edition | null> {
     const client = await clientPromise;
     const db = client.db('yellowsingam_epaper');
     const edition = await db.collection('editions').findOne({ alias });
-    
+
     if (!edition) return null;
-    
+
     // Convert Mongo object to plain JS object with string IDs
     return JSON.parse(JSON.stringify(edition));
   } catch (error) {
@@ -41,21 +41,21 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
   if (!edition) {
     return {
-      title: 'Edition Not Found | Yellow Singam',
+      title: 'Edition Not Found | Andhrapatrika',
     };
   }
 
   const firstPageThumbnail = edition.pages[0]?.previewUrl || edition.pages[0]?.url || '/logo.png';
-  const siteUrl = process.env.NEXTAUTH_URL || 'https://yellowsingam.com';
+  const siteUrl = process.env.NEXTAUTH_URL || 'https://andhrapatrikaa.com';
 
   return {
-    title: `${edition.name} - Yellow Singam Telugu Daily ePaper`,
-    description: `Read the Yellow Singam Telugu Daily ePaper online. Edition: ${edition.name}.`,
+    title: `${edition.name} - Andhrapatrika Telugu Daily ePaper`,
+    description: `Read the Andhrapatrika Telugu Daily ePaper online. Edition: ${edition.name}.`,
     openGraph: {
-      title: `${edition.name} | Yellow Singam ePaper`,
-      description: `Read today's edition of Yellow Singam Telugu Daily.`,
+      title: `${edition.name} | Andhrapatrika ePaper`,
+      description: `Read today's edition of Andhrapatrika Telugu Daily.`,
       url: `${siteUrl}/edition/${id}`,
-      siteName: 'Yellow Singam',
+      siteName: 'Andhrapatrika',
       images: [
         {
           url: firstPageThumbnail,
@@ -68,8 +68,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${edition.name} | Yellow Singam ePaper`,
-      description: `Read today's edition of Yellow Singam Telugu Daily.`,
+      title: `${edition.name} | Andhrapatrika ePaper`,
+      description: `Read today's edition of Andhrapatrika Telugu Daily.`,
       images: [firstPageThumbnail],
     },
   };

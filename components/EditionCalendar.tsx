@@ -247,7 +247,7 @@ export default function EditionCalendar({ className = "", onDateSelect }: Editio
         </h3>
         {isLoading && (
           <div className="w-4 h-4">
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#D4A800] border-t-transparent"></div>
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#1721d8] border-t-transparent"></div>
           </div>
         )}
       </div>
@@ -306,10 +306,10 @@ export default function EditionCalendar({ className = "", onDateSelect }: Editio
                   ${!dayInfo.isCurrentMonth || isFuture 
                     ? 'text-gray-300 cursor-default opacity-50' 
                     : hasEditionToday
-                      ? 'bg-[#D4A800] text-white hover:bg-[#b8930a] cursor-pointer font-semibold shadow-sm'
+                      ? 'bg-[#1721d8] text-white hover:bg-[#121aa8] cursor-pointer font-semibold shadow-sm'
                       : 'text-gray-600 hover:bg-gray-100 cursor-default'
                   }
-                  ${isTodayDate && !hasEditionToday ? 'ring-2 ring-[#D4A800] ring-opacity-50' : ''}
+                  ${isTodayDate && !hasEditionToday ? 'ring-2 ring-[#1721d8] ring-opacity-50' : ''}
                   ${isSelected ? 'ring-2 ring-blue-500' : ''}
                 `}
               >
@@ -326,7 +326,7 @@ export default function EditionCalendar({ className = "", onDateSelect }: Editio
 
         {/* Edition Preview */}
         {previewEdition && selectedDate && (
-          <div className="mt-4 p-3 bg-[#FFF3C4] rounded border border-[#D4A800] border-opacity-30">
+          <div className="mt-4 p-3 bg-[#1721d8]/10 rounded border border-[#1721d8]/30">
             <div className="flex items-start gap-3">
               {previewEdition.pages && previewEdition.pages[0] && (
                 <img
@@ -347,7 +347,7 @@ export default function EditionCalendar({ className = "", onDateSelect }: Editio
                 </p>
                 <Link
                   href={`/edition/${previewEdition.alias}`}
-                  className="inline-flex items-center gap-1 text-xs text-[#D4A800] hover:text-[#b8930a] mt-2 font-medium"
+                  className="inline-flex items-center gap-1 text-xs text-[#1721d8] hover:text-[#121aa8] mt-2 font-medium"
                 >
                   <Eye size={12} />
                   View Edition

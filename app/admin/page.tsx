@@ -1,7 +1,7 @@
-import { 
-  Newspaper, 
-  Eye, 
-  Download, 
+import {
+  Newspaper,
+  Eye,
+  Download,
   Users,
   TrendingUp,
   Calendar,
@@ -58,7 +58,7 @@ export default async function AdminDashboard() {
     { title: 'Total Editions', value: totalEditions.toString(), change: 'Overall', icon: Newspaper, color: 'bg-blue-500', bgColor: 'bg-blue-50' },
     { title: 'Total Views', value: formatNumber(totalViews), change: 'Overall', icon: Eye, color: 'bg-green-500', bgColor: 'bg-green-50' },
     { title: 'Downloads', value: formatNumber(totalDownloads), change: 'Overall', icon: Download, color: 'bg-purple-500', bgColor: 'bg-purple-50' },
-    { title: 'Active Users', value: formatNumber(activeSubscribers), change: 'Overall', icon: Users, color: 'bg-[#D4A800]', bgColor: 'bg-yellow-50' },
+    { title: 'Active Users', value: formatNumber(activeSubscribers), change: 'Overall', icon: Users, color: 'bg-[#1721d8]', bgColor: 'bg-blue-50' },
   ];
 
   const recentEditions = recentEditionsRaw.map((ed) => ({
@@ -76,7 +76,7 @@ export default async function AdminDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-          <p className="text-gray-500 text-sm mt-1">Welcome to Yellow Singam ePaper CMS</p>
+          <p className="text-gray-500 text-sm mt-1">Welcome to Andhrapatrika ePaper CMS</p>
         </div>
         <Link href="/admin/editions/new" className="flex items-center gap-2 bg-[#3b5bdb] text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-[#364fc7] transition-colors shadow-lg shadow-[#3b5bdb]/20">
           <Upload size={18} />
@@ -144,13 +144,12 @@ export default async function AdminDashboard() {
                     <td className="px-6 py-4 text-gray-600 whitespace-nowrap">{edition.pages} pages</td>
                     <td className="px-6 py-4 text-gray-600 whitespace-nowrap">{edition.views.toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        edition.status === 'Published' 
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${edition.status === 'Published'
                           ? 'bg-green-100 text-green-700'
                           : edition.status === 'Scheduled'
                             ? 'bg-blue-100 text-blue-700'
                             : 'bg-gray-100 text-gray-700'
-                      }`}>
+                        }`}>
                         {edition.status}
                       </span>
                     </td>
@@ -211,38 +210,38 @@ export default async function AdminDashboard() {
             <h3 className="font-bold text-gray-800 mb-4">Recent Activity</h3>
             <div className="space-y-4">
               {recentEditionsRaw.slice(0, 4).map((edition, i) => {
-                 let actionText = 'Edition Created';
-                 let TheIcon = FileText;
-                 
-                 if (edition.status === 'published') {
-                   actionText = 'Edition Published';
-                   TheIcon = Newspaper;
-                 } else if (edition.status === 'scheduled') {
-                   actionText = 'Edition Scheduled';
-                   TheIcon = Clock;
-                 }
-                 
-                 // Compute simple time relative string safely
-                 let timeText = 'Recently';
-                 try {
-                   const createdDate = new Date(edition.createdAt || edition.date || new Date());
-                   const diff = Date.now() - createdDate.getTime();
-                   if (diff >= 0) {
-                     const hours = Math.floor(diff / (1000 * 60 * 60));
-                     const days = Math.floor(hours / 24);
-                     if (days > 0) timeText = `${days} day${days > 1 ? 's' : ''} ago`;
-                     else if (hours > 0) timeText = `${hours} hour${hours > 1 ? 's' : ''} ago`;
-                     else {
-                       const minutes = Math.floor(diff / (1000 * 60));
-                       if (minutes > 0) timeText = `${minutes} min${minutes > 1 ? 's' : ''} ago`;
-                       else timeText = 'Just now';
-                     }
-                   }
-                 } catch (e) {
-                   // Fallback
-                 }
+                let actionText = 'Edition Created';
+                let TheIcon = FileText;
 
-                 return (
+                if (edition.status === 'published') {
+                  actionText = 'Edition Published';
+                  TheIcon = Newspaper;
+                } else if (edition.status === 'scheduled') {
+                  actionText = 'Edition Scheduled';
+                  TheIcon = Clock;
+                }
+
+                // Compute simple time relative string safely
+                let timeText = 'Recently';
+                try {
+                  const createdDate = new Date(edition.createdAt || edition.date || new Date());
+                  const diff = Date.now() - createdDate.getTime();
+                  if (diff >= 0) {
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const days = Math.floor(hours / 24);
+                    if (days > 0) timeText = `${days} day${days > 1 ? 's' : ''} ago`;
+                    else if (hours > 0) timeText = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+                    else {
+                      const minutes = Math.floor(diff / (1000 * 60));
+                      if (minutes > 0) timeText = `${minutes} min${minutes > 1 ? 's' : ''} ago`;
+                      else timeText = 'Just now';
+                    }
+                  }
+                } catch (e) {
+                  // Fallback
+                }
+
+                return (
                   <div key={i} className="flex flex-row gap-3">
                     <div className="w-8 h-8 rounded-full bg-gray-100 flex shrink-0 items-center justify-center mt-1">
                       <TheIcon size={14} className="text-gray-500" />
@@ -253,7 +252,7 @@ export default async function AdminDashboard() {
                       <p className="text-[11px] text-gray-400 font-medium">{timeText}</p>
                     </div>
                   </div>
-                 );
+                );
               })}
               {recentEditionsRaw.length === 0 && (
                 <div className="text-sm text-gray-500 text-center py-4">No recent activity</div>

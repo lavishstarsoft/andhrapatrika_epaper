@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import clientPromise from '@/lib/mongodb';
-import { uploadToR2 } from '@/lib/r2';
+import { uploadToR2, resolveMediaUrl } from '@/lib/r2';
+
 import path from 'path';
 import sharp from 'sharp';
 import { pdf as pdfToImages } from 'pdf-to-img';
@@ -90,12 +91,23 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .toArray();
     
+    const resolvedEditions = editions.map(edition => {
+      if (edition.pages && Array.isArray(edition.pages)) {
+        edition.pages = edition.pages.map((page: any) => ({
+          ...page,
+          url: resolveMediaUrl(page.url),
+          previewUrl: resolveMediaUrl(page.previewUrl),
+        }));
+      }
+      return edition;
+    });
+
     const headers: Record<string, string> = showAll
       ? { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
       : { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300' };
 
     return NextResponse.json(
-      { editions },
+      { editions: resolvedEditions },
       { headers }
     );
   } catch (error) {

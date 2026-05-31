@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { 
-  Settings, 
-  Globe, 
-  Palette, 
-  Bell, 
-  Shield, 
+import {
+  Settings,
+  Globe,
+  Palette,
+  Bell,
+  Shield,
   Save,
   Upload,
   Check,
@@ -23,27 +23,30 @@ export default function EpaperSettings() {
   const [uploading, setUploading] = useState(false);
 
   const [settings, setSettings] = useState({
-    siteName: 'Yellow Singam Telugu Daily',
-    tagline: 'Hunting for Truth',
-    siteUrl: 'https://epaper.yellowsingam.com',
-    email: 'contact@yellowsingam.com',
+    siteName: 'Andhrapatrika Telugu Daily',
+    tagline: '',
+    siteUrl: 'https://andhrapatrikaa.com',
+    email: 'contact@andhrapatrikaa.com',
     phone: '+91 9876543210',
     address: 'Vijayawada, Andhra Pradesh, India',
     timezone: 'Asia/Kolkata',
     language: 'te',
-    primaryColor: '#D4A800',
+    primaryColor: '#1721d8',
     secondaryColor: '#2D2D2D',
+    logoUrl: '',
     enableNotifications: true,
     enableAnalytics: true,
     enableWatermark: true,
-    watermarkText: 'Yellow Singam',
+    watermarkText: 'Andhrapatrika',
     pdfQuality: 'high',
     imageQuality: 'high',
     adEnabled: false,
     adType: 'custom',
     googleAdCode: '',
     customAdImage: '',
-    customAdLink: ''
+    customAdLink: '',
+    headerHeight: 56,
+    footerHeight: 64,
   });
 
   useEffect(() => {
@@ -71,7 +74,7 @@ export default function EpaperSettings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
       });
-      
+
       const data = await response.json();
       if (data.success) {
         setSaved(true);
@@ -105,6 +108,33 @@ export default function EpaperSettings() {
       console.error('Failed to upload ad image', error);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogo(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/upload/image', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      if (data.success && data.url) {
+        setSettings(prev => ({ ...prev, logoUrl: data.url }));
+      }
+    } catch (error) {
+      console.error('Failed to upload logo image', error);
+      alert('Failed to upload logo image');
+    } finally {
+      setUploadingLogo(false);
     }
   };
 
@@ -150,11 +180,10 @@ export default function EpaperSettings() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left ${
-                  activeTab === tab.id 
-                    ? 'bg-[#3b5bdb] text-white' 
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left ${activeTab === tab.id
+                  ? 'bg-[#3b5bdb] text-white'
+                  : 'text-gray-600 hover:bg-gray-50'
+                  }`}
               >
                 <tab.icon size={20} />
                 <span className="font-medium">{tab.name}</span>
@@ -168,19 +197,19 @@ export default function EpaperSettings() {
           {activeTab === 'general' && (
             <div className="space-y-6">
               <h2 className="text-lg font-bold text-gray-800 pb-4 border-b">General Settings</h2>
-              
+
               {/* Logo Upload */}
               <div className="flex items-center gap-6 p-4 bg-gray-50 rounded-xl">
                 <div className="w-20 h-20 relative bg-white rounded-xl shadow-sm">
-                  <Image src="/logo.png" alt="Logo" fill className="object-contain p-2" />
+                  <Image src={settings.logoUrl || "/logo.png"} alt="Logo" fill className="object-contain p-2" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800">Site Logo</h3>
                   <p className="text-sm text-gray-500 mb-2">Upload your ePaper logo</p>
                   <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-50">
-                    <Upload size={16} />
-                    Upload New Logo
-                    <input type="file" accept="image/*" className="hidden" />
+                    {uploadingLogo ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                    {uploadingLogo ? 'Uploading...' : 'Upload New Logo'}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
                   </label>
                 </div>
               </div>
@@ -258,9 +287,9 @@ export default function EpaperSettings() {
 
           {activeTab === 'appearance' && (
             <div className="space-y-6">
-               {/* Unchanged Appearance Settings Body */}
-               <h2 className="text-lg font-bold text-gray-800 pb-4 border-b">Appearance Settings</h2>
-              
+              {/* Unchanged Appearance Settings Body */}
+              <h2 className="text-lg font-bold text-gray-800 pb-4 border-b">Appearance Settings</h2>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Primary Color</label>
@@ -295,6 +324,31 @@ export default function EpaperSettings() {
                       className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3b5bdb]/20 focus:border-[#3b5bdb]"
                     />
                   </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Header Logo Height (px)</label>
+                  <input
+                    type="number"
+                    min="20"
+                    max="200"
+                    value={settings.headerHeight || 56}
+                    onChange={(e) => setSettings(prev => ({ ...prev, headerHeight: parseInt(e.target.value) || 56 }))}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3b5bdb]/20 focus:border-[#3b5bdb]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Footer Logo Height (px)</label>
+                  <input
+                    type="number"
+                    min="20"
+                    max="200"
+                    value={settings.footerHeight || 64}
+                    onChange={(e) => setSettings(prev => ({ ...prev, footerHeight: parseInt(e.target.value) || 64 }))}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3b5bdb]/20 focus:border-[#3b5bdb]"
+                  />
                 </div>
               </div>
 
@@ -357,7 +411,7 @@ export default function EpaperSettings() {
           {activeTab === 'notifications' && (
             <div className="space-y-6">
               <h2 className="text-lg font-bold text-gray-800 pb-4 border-b">Notification Settings</h2>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                   <div>
@@ -391,7 +445,7 @@ export default function EpaperSettings() {
           {activeTab === 'security' && (
             <div className="space-y-6">
               <h2 className="text-lg font-bold text-gray-800 pb-4 border-b">Security Settings</h2>
-              
+
               <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
                 <h3 className="font-semibold text-yellow-800">Change Admin Password</h3>
                 <p className="text-sm text-yellow-600 mb-4">Update your admin account password</p>
@@ -440,22 +494,22 @@ export default function EpaperSettings() {
                     <label className="block text-sm font-semibold text-gray-700 mb-3">Advertisement Type</label>
                     <div className="flex gap-4">
                       <label className={`flex-1 flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${settings.adType === 'google' ? 'border-[#3b5bdb] bg-[#3b5bdb]/5' : 'border-gray-200 hover:border-gray-300'}`}>
-                        <input 
-                          type="radio" 
-                          name="adType" 
-                          value="google" 
-                          checked={settings.adType === 'google'} 
+                        <input
+                          type="radio"
+                          name="adType"
+                          value="google"
+                          checked={settings.adType === 'google'}
                           onChange={() => setSettings(prev => ({ ...prev, adType: 'google' }))}
                           className="w-4 h-4 text-[#3b5bdb]"
                         />
                         <span className="font-semibold text-gray-800">Google Ad (HTML/Script)</span>
                       </label>
                       <label className={`flex-1 flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${settings.adType === 'custom' ? 'border-[#3b5bdb] bg-[#3b5bdb]/5' : 'border-gray-200 hover:border-gray-300'}`}>
-                        <input 
-                          type="radio" 
-                          name="adType" 
-                          value="custom" 
-                          checked={settings.adType === 'custom'} 
+                        <input
+                          type="radio"
+                          name="adType"
+                          value="custom"
+                          checked={settings.adType === 'custom'}
                           onChange={() => setSettings(prev => ({ ...prev, adType: 'custom' }))}
                           className="w-4 h-4 text-[#3b5bdb]"
                         />
@@ -485,7 +539,7 @@ export default function EpaperSettings() {
                           {settings.customAdImage ? (
                             <Image src={settings.customAdImage} alt="Ad Preview" fill className="object-cover" />
                           ) : (
-                            <span className="text-gray-400 text-xs text-center px-2">No Image Selected<br/>(Prefer 300x250)</span>
+                            <span className="text-gray-400 text-xs text-center px-2">No Image Selected<br />(Prefer 300x250)</span>
                           )}
                         </div>
                         <div className="flex-1 space-y-4">
@@ -498,7 +552,7 @@ export default function EpaperSettings() {
                               <input type="file" accept="image/*" className="hidden" onChange={handleAdImageUpload} disabled={uploading} />
                             </label>
                           </div>
-                          
+
                           <div className="pt-2">
                             <label className="block text-sm font-semibold text-gray-700 mb-1">Click URL</label>
                             <p className="text-xs text-gray-500 mb-2">Where users should go when they click the ad.</p>

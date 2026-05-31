@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const DOTS = 'ellipsis';
 
@@ -64,6 +64,7 @@ const buildPageItems = (current: number, total: number): PageItem[] => {
 
 export default function Pagination({ currentPage, totalPages }: PaginationProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
   const pageItems = useMemo(
@@ -73,8 +74,10 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
 
   const goToPage = (page: number) => {
     if (page < 1 || page > totalPages || page === currentPage) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', String(page));
     startTransition(() => {
-      router.push(`/?page=${page}`);
+      router.push(`/?${params.toString()}`);
     });
   };
 
@@ -113,7 +116,7 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
               disabled={isPending}
               className={`h-10 min-w-[40px] rounded-lg border text-lg font-semibold transition-colors ${
                 item === currentPage
-                  ? 'border-[#D4A800] text-white bg-[#D4A800] shadow-sm'
+                  ? 'border-[#1721d8] text-white bg-[#1721d8] shadow-sm'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               } ${isPending ? 'opacity-70 cursor-wait' : ''}`}
               aria-current={item === currentPage ? 'page' : undefined}

@@ -5,14 +5,14 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  LayoutDashboard, 
-  Newspaper, 
-  Upload, 
-  Users, 
-  Settings, 
-  LogOut, 
-  Menu, 
+import {
+  LayoutDashboard,
+  Newspaper,
+  Upload,
+  Users,
+  Settings,
+  LogOut,
+  Menu,
   X,
   FolderOpen,
   Palette,
@@ -100,7 +100,7 @@ export default function AdminShell({ children }: AdminLayoutProps) {
     <div className="min-h-screen bg-[#f0f4ff] flex">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -110,22 +110,22 @@ export default function AdminShell({ children }: AdminLayoutProps) {
       <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white shadow-lg transform transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col h-screen`}>
         {/* Logo - Fixed at top */}
         <div className="p-5 border-b flex items-center justify-between flex-shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 relative">
-                <Image src="/logo.png" alt="Logo" fill className="object-contain" />
-              </div>
-              <div>
-                <h1 className="text-[#3b5bdb] font-bold text-lg">Yellow Singam</h1>
-                <p className="text-gray-400 text-xs">ePaper CMS</p>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 relative">
+              <Image src="/logo.png" alt="Logo" fill className="object-contain" />
             </div>
-            <button 
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-1 hover:bg-gray-100 rounded"
-            >
-              <X size={20} />
-            </button>
+            <div>
+              <h1 className="text-[#3b5bdb] font-bold text-lg">Andhrapatrika</h1>
+              <p className="text-gray-400 text-xs">ePaper CMS</p>
+            </div>
           </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden p-1 hover:bg-gray-100 rounded"
+          >
+            <X size={20} />
+          </button>
+        </div>
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
@@ -133,7 +133,7 @@ export default function AdminShell({ children }: AdminLayoutProps) {
           <div className="p-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input 
+              <input
                 type="text"
                 placeholder="Search menu"
                 value={searchQuery}
@@ -147,11 +147,10 @@ export default function AdminShell({ children }: AdminLayoutProps) {
           <div className="px-4 mb-2">
             <Link
               href="/admin"
-              className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                pathname === '/admin' 
-                  ? 'bg-[#3b5bdb] text-white' 
+              className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all ${pathname === '/admin'
+                  ? 'bg-[#3b5bdb] text-white'
                   : 'text-gray-600 hover:bg-gray-50'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3">
                 <LayoutDashboard size={20} />
@@ -170,23 +169,22 @@ export default function AdminShell({ children }: AdminLayoutProps) {
                 </h3>
                 <div className="space-y-1">
                   {section.items
-                    .filter(item => 
-                      searchQuery === '' || 
+                    .filter(item =>
+                      searchQuery === '' ||
                       item.name.toLowerCase().includes(searchQuery.toLowerCase())
                     )
                     .map((item) => {
                       // Check if current page matches this menu item - exact match only
                       const isActive = pathname === item.href;
-                      
+
                       return (
                         <Link
                           key={item.name}
                           href={item.href}
-                          className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                            isActive
-                              ? 'bg-[#3b5bdb] text-white shadow-lg shadow-[#3b5bdb]/20' 
+                          className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all ${isActive
+                              ? 'bg-[#3b5bdb] text-white shadow-lg shadow-[#3b5bdb]/20'
                               : 'text-gray-600 hover:bg-gray-50'
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center gap-3">
                             <item.icon size={20} />
@@ -208,7 +206,7 @@ export default function AdminShell({ children }: AdminLayoutProps) {
         {/* Top Header */}
         <header className="bg-white border-b px-4 lg:px-6 py-4 flex items-center justify-between flex-shrink-0 shadow-sm">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
             >
@@ -225,7 +223,7 @@ export default function AdminShell({ children }: AdminLayoutProps) {
 
             {/* User Avatar with Dropdown */}
             <div className="relative">
-              <button 
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setProfileDropdownOpen(!profileDropdownOpen);
@@ -243,8 +241,8 @@ export default function AdminShell({ children }: AdminLayoutProps) {
                     <p className="text-sm text-gray-500">{session.user?.email}</p>
                   </div>
                   <div className="py-1">
-                    <Link 
-                      href="/admin/settings" 
+                    <Link
+                      href="/admin/settings"
                       className="flex items-center gap-3 px-4 py-2.5 text-gray-600 hover:bg-gray-50 transition-colors"
                     >
                       <Settings size={18} />

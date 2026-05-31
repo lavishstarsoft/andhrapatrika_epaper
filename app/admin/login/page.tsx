@@ -43,24 +43,24 @@ export default function AdminLogin() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#2D2D2D] via-[#1a1a1a] to-[#2D2D2D] p-4">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{ 
+        <div className="absolute inset-0" style={{
           backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
           backgroundSize: '40px 40px'
         }} />
       </div>
-      
+
       <div className="relative w-full max-w-md">
         {/* Logo & Header */}
         <div className="text-center mb-8">
           <div className="w-24 h-24 mx-auto mb-4 relative">
             <Image
               src="/logo.png"
-              alt="Yellow Singam"
+              alt="Andhrapatrika"
               fill
               className="object-contain"
             />
           </div>
-          <h1 className="text-3xl font-bold text-[#D4A800]">Yellow Singam</h1>
+          <h1 className="text-3xl font-bold text-[#1721d8]">Andhrapatrika</h1>
           <p className="text-gray-400 mt-1">ePaper Admin Dashboard</p>
         </div>
 
@@ -89,8 +89,8 @@ export default function AdminLogin() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A800] focus:ring-1 focus:ring-[#D4A800] transition-all"
-                  placeholder="admin@yellowsingam.com"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#1721d8] focus:ring-1 focus:ring-[#1721d8] transition-all"
+                  placeholder="admin@andhrapatrika.com"
                   required
                 />
               </div>
@@ -107,7 +107,7 @@ export default function AdminLogin() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-12 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#D4A800] focus:ring-1 focus:ring-[#D4A800] transition-all"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-12 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#1721d8] focus:ring-1 focus:ring-[#1721d8] transition-all"
                   placeholder="••••••••"
                   required
                 />
@@ -124,13 +124,13 @@ export default function AdminLogin() {
             {/* Remember Me & Forgot */}
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 text-gray-400 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="w-4 h-4 rounded border-gray-600 bg-white/5 text-[#D4A800] focus:ring-[#D4A800] focus:ring-offset-0"
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded border-gray-600 bg-white/5 text-[#1721d8] focus:ring-[#1721d8] focus:ring-offset-0"
                 />
                 Remember me
               </label>
-              <a href="#" className="text-[#D4A800] hover:underline">
+              <a href="#" className="text-white hover:underline">
                 Forgot password?
               </a>
             </div>
@@ -139,10 +139,10 @@ export default function AdminLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-[#D4A800] to-[#B8960A] text-black font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:from-[#E5B800] hover:to-[#C9A70B] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#D4A800]/20"
+              className="w-full bg-gradient-to-r from-[#1721d8] to-[#121aa8] text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:from-[#1b26f5] hover:to-[#1721d8] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#1721d8]/20"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <LogIn size={20} />
@@ -155,7 +155,7 @@ export default function AdminLogin() {
 
         {/* Footer */}
         <p className="text-center text-gray-500 text-sm mt-6">
-          © 2026 Yellow Singam. All rights reserved.
+          © 2026 Andhrapatrika. All rights reserved.
         </p>
       </div>
     </div>
