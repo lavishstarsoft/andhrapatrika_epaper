@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { deleteFromR2, resolveMediaUrl } from '@/lib/r2';
@@ -92,6 +93,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Failed to delete edition' }, { status: 500 });
     }
 
+    revalidateTag('home-data');
+    revalidatePath('/');
+
     return NextResponse.json({ 
       success: true, 
       message: 'Edition deleted successfully' 
@@ -156,6 +160,9 @@ export async function PUT(
     if (result.matchedCount === 0) {
       return NextResponse.json({ error: 'Edition not found' }, { status: 404 });
     }
+
+    revalidateTag('home-data');
+    revalidatePath('/');
 
     return NextResponse.json({ 
       success: true, 

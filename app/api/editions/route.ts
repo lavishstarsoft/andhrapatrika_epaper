@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import clientPromise from '@/lib/mongodb';
 import { uploadToR2, resolveMediaUrl } from '@/lib/r2';
 
@@ -164,6 +164,7 @@ export async function POST(request: NextRequest) {
 
       const result = await db.collection('editions').insertOne(edition);
       revalidateTag('home-data');
+      revalidatePath('/');
       return NextResponse.json({
         success: true,
         editionId: result.insertedId,
@@ -259,6 +260,7 @@ export async function POST(request: NextRequest) {
 
     const result = await db.collection('editions').insertOne(edition);
     revalidateTag('home-data');
+    revalidatePath('/');
 
     return NextResponse.json({ 
       success: true, 

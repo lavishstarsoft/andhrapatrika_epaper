@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
@@ -48,6 +49,9 @@ export async function PUT(
       return NextResponse.json({ success: false, error: 'Category not found' }, { status: 404 });
     }
 
+    revalidateTag('home-data');
+    revalidatePath('/');
+
     return NextResponse.json({
       success: true,
       message: 'Category updated successfully',
@@ -81,6 +85,9 @@ export async function DELETE(
     if (result.deletedCount === 0) {
       return NextResponse.json({ success: false, error: 'Category not found' }, { status: 404 });
     }
+
+    revalidateTag('home-data');
+    revalidatePath('/');
 
     return NextResponse.json({
       success: true,

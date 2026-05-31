@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import clientPromise from '@/lib/mongodb';
 
 // Helper to slugify category name
@@ -121,6 +122,9 @@ export async function POST(request: NextRequest) {
     };
 
     const result = await db.collection('categories').insertOne(newCategory);
+
+    revalidateTag('home-data');
+    revalidatePath('/');
 
     return NextResponse.json({
       success: true,

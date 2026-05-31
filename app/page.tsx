@@ -112,7 +112,7 @@ const getHomeData = unstable_cache(
     }
   },
   ['home-data'],
-  { revalidate: 120 }
+  { revalidate: 120, tags: ['home-data'] }
 );
 
 export default async function Home({
