@@ -644,7 +644,10 @@ export default function PublishEdition() {
             pageMeta = await uploadEditionPageViaPresign(folderName, i + 1, original, thumbBlob);
           } catch (presignErr) {
             console.warn(`Presigned upload failed for page ${i + 1}, using fallback:`, presignErr);
-            pageMeta = await uploadEditionPageViaApi(folderName, i + 1, original);
+            // Compress to fit under Vercel's ~4.5MB body limit
+            const compressedBlob = await compressFullWebpForUpload(original);
+            const compressedFile = new File([compressedBlob], original.name, { type: 'image/webp' });
+            pageMeta = await uploadEditionPageViaApi(folderName, i + 1, compressedFile);
           }
           uploadedPages.push(pageMeta);
 
