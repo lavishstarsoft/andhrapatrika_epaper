@@ -28,7 +28,10 @@ export async function generateMetadata(
 
     // Get base URL dynamically from headers to ensure correct domains on sharing
     const headersList = await headers();
-    const host = headersList.get('host') || 'andhrapatrika-epaper.vercel.app';
+    let host = headersList.get('host') || 'andhrapatrika-epaper.vercel.app';
+    if (host === 'andhrapatrikaa.com') {
+      host = 'www.andhrapatrikaa.com';
+    }
     const protocol = headersList.get('x-forwarded-proto') || 'https';
     const baseUrl = `${protocol}://${host}`;
 

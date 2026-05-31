@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import clientPromise from '@/lib/mongodb';
 import EditionReader from '@/components/EditionReader';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { ObjectId } from 'mongodb';
 import { headers } from 'next/headers';
 
@@ -67,7 +67,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
   // Get base URL dynamically from headers to ensure correct domains on sharing
   const headersList = await headers();
-  const host = headersList.get('host') || 'andhrapatrika-epaper.vercel.app';
+  let host = headersList.get('host') || 'andhrapatrika-epaper.vercel.app';
+  if (host === 'andhrapatrikaa.com') {
+    host = 'www.andhrapatrikaa.com';
+  }
   const protocol = headersList.get('x-forwarded-proto') || 'https';
   const baseUrl = `${protocol}://${host}`;
 
@@ -111,6 +114,15 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function EditionDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  // Enforce www. subdomain redirect for custom domain requests
+  const headersList = await headers();
+  const host = headersList.get('host') || '';
+  if (host === 'andhrapatrikaa.com') {
+    const protocol = headersList.get('x-forwarded-proto') || 'https';
+    redirect(`${protocol}://www.andhrapatrikaa.com/edition/${id}`);
+  }
+
   const [edition, settings] = await Promise.all([
     getEdition(id),
     getSettings()
