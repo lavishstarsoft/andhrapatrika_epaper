@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import clientPromise from '@/lib/mongodb';
 import { resolveMediaUrl } from '@/lib/r2';
 
@@ -53,8 +54,7 @@ export async function GET() {
       { success: true, settings },
       {
         headers: {
-          // Site settings are mostly static; cache for faster repeated loads.
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
         },
       }
     );
@@ -79,6 +79,9 @@ export async function POST(request: NextRequest) {
       { $set: updateData },
       { upsert: true }
     );
+
+    revalidateTag('home-data');
+    revalidatePath('/');
 
     return NextResponse.json({ success: true, message: 'Settings updated successfully' });
   } catch (error) {
