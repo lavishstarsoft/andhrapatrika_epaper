@@ -2,6 +2,8 @@ import { Metadata } from 'next';
 import clientPromise from '@/lib/mongodb';
 import EditionReader from '@/components/EditionReader';
 import { notFound } from 'next/navigation';
+import { ObjectId } from 'mongodb';
+import { headers } from 'next/headers';
 
 interface EditionPage {
   filename: string;
@@ -19,11 +21,17 @@ interface Edition {
   pageCount: number;
 }
 
-async function getEdition(alias: string): Promise<Edition | null> {
+async function getEdition(id: string): Promise<Edition | null> {
   try {
     const client = await clientPromise;
     const db = client.db('yellowsingam_epaper');
-    const edition = await db.collection('editions').findOne({ alias });
+    
+    // Check if id is a valid ObjectId or treating it as alias string
+    const query = ObjectId.isValid(id) && id.length === 24
+      ? { _id: new ObjectId(id) }
+      : { alias: id };
+
+    const edition = await db.collection('editions').findOne(query);
 
     if (!edition) return null;
 
@@ -57,20 +65,34 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     };
   }
 
+  // Get base URL dynamically from headers to ensure correct domains on sharing
+  const headersList = await headers();
+  const host = headersList.get('host') || 'andhrapatrika-epaper.vercel.app';
+  const protocol = headersList.get('x-forwarded-proto') || 'https';
+  const baseUrl = `${protocol}://${host}`;
+
   const firstPageThumbnail = edition.pages[0]?.previewUrl || edition.pages[0]?.url || '/logo.png';
-  const siteUrl = process.env.NEXTAUTH_URL || 'https://andhrapatrikaa.com';
+  const absoluteImageUrl = firstPageThumbnail.startsWith('http')
+    ? firstPageThumbnail
+    : `${baseUrl.replace(/\/$/, '')}${firstPageThumbnail}`;
+
+  const editionSlug = edition.alias || id;
+  const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/edition/${editionSlug}`;
 
   return {
     title: `${edition.name} - Andhrapatrika Telugu Daily ePaper`,
     description: `Read the Andhrapatrika Telugu Daily ePaper online. Edition: ${edition.name}.`,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title: `${edition.name} | Andhrapatrika ePaper`,
       description: `Read today's edition of Andhrapatrika Telugu Daily.`,
-      url: `${siteUrl}/edition/${id}`,
+      url: canonicalUrl,
       siteName: 'Andhrapatrika',
       images: [
         {
-          url: firstPageThumbnail,
+          url: absoluteImageUrl,
           width: 800,
           height: 1200,
           alt: edition.name,
@@ -82,7 +104,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       card: 'summary_large_image',
       title: `${edition.name} | Andhrapatrika ePaper`,
       description: `Read today's edition of Andhrapatrika Telugu Daily.`,
-      images: [firstPageThumbnail],
+      images: [absoluteImageUrl],
     },
   };
 }

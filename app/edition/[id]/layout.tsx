@@ -1,6 +1,7 @@
 import { Metadata, ResolvingMetadata } from 'next';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { headers } from 'next/headers';
 
 export async function generateMetadata(
   { params }: { params: any },
@@ -25,10 +26,15 @@ export async function generateMetadata(
       return {};
     }
 
+    // Get base URL dynamically from headers to ensure correct domains on sharing
+    const headersList = await headers();
+    const host = headersList.get('host') || 'andhrapatrika-epaper.vercel.app';
+    const protocol = headersList.get('x-forwarded-proto') || 'https';
+    const baseUrl = `${protocol}://${host}`;
+
     // OG image: first page URL from DB (e.g. Cloudflare R2 public URL). Must be https for WhatsApp/Facebook.
     const pageImage = edition.pages?.[0]?.url || '/logo.png';
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://andhrapatrikaa.com';
-    const absoluteImageUrl = pageImage.startsWith('http') ? pageImage : `${baseUrl}${pageImage}`;
+    const absoluteImageUrl = pageImage.startsWith('http') ? pageImage : `${baseUrl.replace(/\/$/, '')}${pageImage}`;
     const editionSlug = typeof edition.alias === 'string' ? edition.alias : id;
     const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/edition/${editionSlug}`;
 
