@@ -23,7 +23,8 @@ import {
   Megaphone,
   ChevronRight,
   Search,
-  Bell
+  Bell,
+  MoreVertical
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -70,6 +71,8 @@ export default function AdminShell({ children }: AdminLayoutProps) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [lastPathname, setLastPathname] = useState(pathname);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [visibleItemsCount, setVisibleItemsCount] = useState(null as number | null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -191,19 +194,25 @@ export default function AdminShell({ children }: AdminLayoutProps) {
 
           {/* Nav Sections */}
           <nav className="px-4 pb-4 space-y-4">
-            {sidebarSections.map((section) => (
-              <div key={section.title}>
-                <h3 className="px-4 py-2 text-xs font-bold text-[#3b5bdb] bg-[#e8edfc] rounded-lg mb-2">
-                  {section.title}
-                </h3>
-                <div className="space-y-1">
-                  {section.items
-                    .filter(item =>
-                      searchQuery === '' ||
-                      item.name.toLowerCase().includes(searchQuery.toLowerCase())
-                    )
-                    .map((item) => {
-                      // Check if current page matches this menu item - exact match only
+            {sidebarSections.map((section) => {
+              const filteredItems = section.items.filter(item =>
+                searchQuery === '' ||
+                item.name.toLowerCase().includes(searchQuery.toLowerCase())
+              );
+
+              // Show first 3 items, rest in "More" menu
+              const visibleItems = filteredItems.slice(0, 3);
+              const hiddenItems = filteredItems.slice(3);
+              const hasMore = hiddenItems.length > 0;
+
+              return (
+                <div key={section.title}>
+                  <h3 className="px-4 py-2 text-xs font-bold text-[#3b5bdb] bg-[#e8edfc] rounded-lg mb-2">
+                    {section.title}
+                  </h3>
+                  <div className="space-y-1">
+                    {/* Visible Items */}
+                    {visibleItems.map((item) => {
                       const isActive = pathname === item.href;
 
                       return (
@@ -224,9 +233,55 @@ export default function AdminShell({ children }: AdminLayoutProps) {
                         </Link>
                       );
                     })}
+
+                    {/* More Button with Dropdown */}
+                    {hasMore && (
+                      <div className="relative group">
+                        <button
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all text-gray-600 hover:bg-gray-50 group-hover:bg-[#3b5bdb] group-hover:text-white"
+                        >
+                          <div className="flex items-center gap-3">
+                            <MoreVertical size={20} />
+                            <span className="font-medium text-sm">More ({hiddenItems.length})</span>
+                          </div>
+                          <ChevronRight size={18} className="group-hover:text-white text-gray-400" />
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        <div className="absolute left-0 top-full mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                          <div className="py-1">
+                            {hiddenItems.map((item) => {
+                              const isActive = pathname === item.href;
+
+                              return (
+                                <Link
+                                  key={item.name}
+                                  href={item.href}
+                                  onClick={() => {
+                                    handleNavigation(item.href);
+                                    setShowMoreMenu(false);
+                                  }}
+                                  className={`flex items-center justify-between px-4 py-3 transition-all ${isActive
+                                      ? 'bg-[#3b5bdb] text-white'
+                                      : 'text-gray-600 hover:bg-gray-50'
+                                    }`}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <item.icon size={18} />
+                                    <span className="font-medium text-sm">{item.name}</span>
+                                  </div>
+                                  <ChevronRight size={16} className={isActive ? 'text-white' : 'text-gray-400'} />
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </nav>
         </div>
       </aside>
