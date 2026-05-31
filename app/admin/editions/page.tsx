@@ -13,7 +13,8 @@ import {
   RefreshCw,
   AlertCircle,
   X,
-  ExternalLink
+  ExternalLink,
+  Copy
 } from 'lucide-react';
 
 interface EditionPage {
@@ -52,7 +53,7 @@ export default function ManageEditions() {
   const [generatingPdfId, setGeneratingPdfId] = useState<string | null>(null);
   const [pdfModalEdition, setPdfModalEdition] = useState<Edition | null>(null);
   const [pdfAbortController, setPdfAbortController] = useState<AbortController | null>(null);
-  const [downloadedMessage, setDownloadedMessage] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Fetch editions from API
   const fetchEditions = useCallback(async () => {
@@ -190,6 +191,52 @@ export default function ManageEditions() {
     return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  const fallbackCopy = (text: string) => {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', 'true');
+    textarea.style.position = 'fixed';
+    textarea.style.top = '0';
+    textarea.style.left = '0';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return copied;
+  };
+
+  const handleCopyLink = async (edition: Edition) => {
+    if (!edition.alias) {
+      setError('Missing edition alias.');
+      return;
+    }
+
+    const shareUrl = `${window.location.origin}/edition/${edition.alias}`;
+
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast('Link copied');
+        return;
+      }
+
+      const copied = fallbackCopy(shareUrl);
+      if (!copied) {
+        throw new Error('Copy command failed');
+      }
+      showToast('Link copied');
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+      setError('Failed to copy link');
+    }
+  };
+
   const handleDownloadPdf = async (edition: Edition) => {
     if (generatingPdfId) return;
     setError('');
@@ -226,8 +273,7 @@ export default function ManageEditions() {
       a.remove();
       // Keep blob URL briefly so browser can complete handoff even if tab is minimized.
       setTimeout(() => URL.revokeObjectURL(downloadUrl), 60_000);
-      setDownloadedMessage(`Downloaded: ${edition.name}`);
-      setTimeout(() => setDownloadedMessage(null), 2500);
+      showToast(`Downloaded: ${edition.name}`);
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') {
         setError('PDF generation cancelled.');
@@ -473,6 +519,13 @@ export default function ManageEditions() {
                           >
                             <ExternalLink size={18} className="text-gray-500" />
                           </Link>
+                          <button
+                            onClick={() => handleCopyLink(edition)}
+                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="Copy Link"
+                          >
+                            <Copy size={18} className="text-gray-500" />
+                          </button>
                           <Link 
                             href={`/admin/editions/${edition._id}/edit`}
                             className="p-2 hover:bg-gray-100 rounded-lg transition-colors" 
@@ -619,11 +672,11 @@ export default function ManageEditions() {
         </div>
       )}
 
-      {/* Download Success Toast */}
-      {downloadedMessage && (
+      {/* Action Toast */}
+      {toastMessage && (
         <div className="fixed bottom-5 right-5 z-50">
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl shadow-lg text-sm font-medium">
-            {downloadedMessage}
+            {toastMessage}
           </div>
         </div>
       )}
