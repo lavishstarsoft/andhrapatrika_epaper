@@ -41,6 +41,10 @@ export default function ManageEditions() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [dateFilterStart, setDateFilterStart] = useState('');
+  const [dateFilterEnd, setDateFilterEnd] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [deleteModal, setDeleteModal] = useState<Edition | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
@@ -131,8 +135,28 @@ export default function ManageEditions() {
                           edition.alias?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || edition.status === statusFilter;
     const matchesCategory = categoryFilter === 'all' || edition.category === categoryFilter;
-    return matchesSearch && matchesStatus && matchesCategory;
+    
+    // Date filter
+    const editionDate = new Date(edition.date);
+    let matchesDate = true;
+    
+    if (dateFilterStart) {
+      const startDate = new Date(dateFilterStart + 'T00:00:00');
+      matchesDate = matchesDate && editionDate >= startDate;
+    }
+    
+    if (dateFilterEnd) {
+      const endDate = new Date(dateFilterEnd + 'T23:59:59');
+      matchesDate = matchesDate && editionDate <= endDate;
+    }
+    
+    return matchesSearch && matchesStatus && matchesCategory && matchesDate;
   });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredEditions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedEditions = filteredEditions.slice(startIndex, startIndex + itemsPerPage);
 
   const getStatusBadge = (status: string, dateStr: string) => {
     if (status === 'scheduled' && new Date(dateStr) <= new Date()) {
@@ -255,7 +279,7 @@ export default function ManageEditions() {
       )}
 
       {/* Filters Bar */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-4">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">
@@ -264,7 +288,10 @@ export default function ManageEditions() {
               type="text"
               placeholder="Search editions..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3b5bdb]/20 focus:border-[#3b5bdb]"
             />
           </div>
@@ -272,7 +299,10 @@ export default function ManageEditions() {
           {/* Status Filter */}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3b5bdb]/20 focus:border-[#3b5bdb] appearance-none cursor-pointer min-w-[150px]"
           >
             <option value="all">All Status</option>
@@ -284,7 +314,10 @@ export default function ManageEditions() {
           {/* Category Filter */}
           <select
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            onChange={(e) => {
+              setCategoryFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3b5bdb]/20 focus:border-[#3b5bdb] appearance-none cursor-pointer min-w-[150px]"
           >
             <option value="all">All Categories</option>
@@ -292,6 +325,48 @@ export default function ManageEditions() {
               <option key={cat.slug} value={cat.slug}>{cat.name}</option>
             ))}
           </select>
+        </div>
+
+        {/* Date Range Filter */}
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-600 mb-2">From Date</label>
+            <input
+              type="date"
+              value={dateFilterStart}
+              onChange={(e) => {
+                setDateFilterStart(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3b5bdb]/20 focus:border-[#3b5bdb]"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-600 mb-2">To Date</label>
+            <input
+              type="date"
+              value={dateFilterEnd}
+              onChange={(e) => {
+                setDateFilterEnd(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3b5bdb]/20 focus:border-[#3b5bdb]"
+            />
+          </div>
+          {(dateFilterStart || dateFilterEnd) && (
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setDateFilterStart('');
+                  setDateFilterEnd('');
+                  setCurrentPage(1);
+                }}
+                className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm hover:bg-gray-100 transition-colors font-medium"
+              >
+                Clear Dates
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -328,7 +403,7 @@ export default function ManageEditions() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filteredEditions.map((edition) => (
+                  {paginatedEditions.map((edition) => (
                     <tr key={edition._id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -410,10 +485,46 @@ export default function ManageEditions() {
             </div>
 
             {/* Pagination */}
-            <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+            <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-sm text-gray-500">
-                Showing <span className="font-medium">{filteredEditions.length}</span> editions
+                Showing <span className="font-medium">{startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredEditions.length)}</span> of <span className="font-medium">{filteredEditions.length}</span> editions
               </p>
+              
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          currentPage === page
+                            ? 'bg-[#3b5bdb] text-white'
+                            : 'border border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           </>
         )}
