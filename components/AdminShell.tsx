@@ -68,12 +68,30 @@ export default function AdminShell({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [lastPathname, setLastPathname] = useState(pathname);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin/login');
     }
   }, [status, router]);
+
+  // Detect route changes and hide loader
+  useEffect(() => {
+    if (pathname !== lastPathname) {
+      setIsNavigating(false);
+      setLastPathname(pathname);
+      setSidebarOpen(false);
+    }
+  }, [pathname, lastPathname]);
+
+  // Handle menu link click with loading state
+  const handleNavigation = (href: string) => {
+    if (href !== pathname) {
+      setIsNavigating(true);
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -98,6 +116,16 @@ export default function AdminShell({ children }: AdminLayoutProps) {
 
   return (
     <div className="min-h-screen bg-[#f0f4ff] flex">
+      {/* Page Loading Overlay */}
+      {isNavigating && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[200] flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-[#3b5bdb] border-t-transparent rounded-full animate-spin" />
+            <p className="text-gray-600 font-medium">Loading page...</p>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
@@ -147,6 +175,7 @@ export default function AdminShell({ children }: AdminLayoutProps) {
           <div className="px-4 mb-2">
             <Link
               href="/admin"
+              onClick={() => handleNavigation('/admin')}
               className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all ${pathname === '/admin'
                   ? 'bg-[#3b5bdb] text-white'
                   : 'text-gray-600 hover:bg-gray-50'
@@ -181,6 +210,7 @@ export default function AdminShell({ children }: AdminLayoutProps) {
                         <Link
                           key={item.name}
                           href={item.href}
+                          onClick={() => handleNavigation(item.href)}
                           className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all ${isActive
                               ? 'bg-[#3b5bdb] text-white shadow-lg shadow-[#3b5bdb]/20'
                               : 'text-gray-600 hover:bg-gray-50'
@@ -243,6 +273,7 @@ export default function AdminShell({ children }: AdminLayoutProps) {
                   <div className="py-1">
                     <Link
                       href="/admin/settings"
+                      onClick={() => handleNavigation('/admin/settings')}
                       className="flex items-center gap-3 px-4 py-2.5 text-gray-600 hover:bg-gray-50 transition-colors"
                     >
                       <Settings size={18} />
