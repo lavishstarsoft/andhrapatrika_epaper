@@ -115,14 +115,6 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function EditionDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  // Enforce www. subdomain redirect for custom domain requests
-  const headersList = await headers();
-  const host = headersList.get('host') || '';
-  if (host === 'andhrapatrikaa.com') {
-    const protocol = headersList.get('x-forwarded-proto') || 'https';
-    redirect(`${protocol}://www.andhrapatrikaa.com/edition/${id}`);
-  }
-
   const [edition, settings] = await Promise.all([
     getEdition(id),
     getSettings()
