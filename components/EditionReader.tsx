@@ -752,46 +752,25 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
     const shareUrl = window.location.href;
     const shareData = {
       title: edition?.name || 'Andhrapatrika ePaper',
-      text: `Read ${edition?.name || 'Andhrapatrika ePaper'} online`,
+      text: `READ ANDHARAPATRIKA Telugu Daily ePaper online: ${edition?.name || ''}`,
       url: shareUrl,
     };
 
     if (navigator.share) {
       try {
-        // 1) Try Android native "share image" style when supported.
-        const pageUrl = getCurrentPageUrl();
-        if (pageUrl) {
-          const imageRes = await fetch(pageUrl, { cache: 'no-store' });
-          if (imageRes.ok) {
-            const blob = await imageRes.blob();
-            const ext = blob.type.includes('png') ? 'png' : blob.type.includes('webp') ? 'webp' : 'jpg';
-            const file = new File([blob], `yellow-singam-page-${currentPage + 1}.${ext}`, { type: blob.type || 'image/jpeg' });
-            if (navigator.canShare?.({ files: [file] })) {
-              await navigator.share({
-                title: shareData.title,
-                text: shareData.text,
-                url: shareData.url,
-                files: [file],
-              });
-              return;
-            }
-          }
-        }
-      } catch (err: any) {
-        if (err?.name === 'AbortError') return;
-      }
-
-      try {
-        // 2) Fallback to plain native share.
-        await navigator.share({ url: shareUrl, title: shareData.title, text: shareData.text });
+        await navigator.share({
+          title: shareData.title,
+          text: shareData.text,
+          url: shareData.url,
+        });
         return;
       } catch (err: any) {
         if (err?.name === 'AbortError') return;
       }
     }
 
-    // Native share unavailable (common on http/non-supported browsers).
-    alert('Native share is not available in this browser/context. Please open via HTTPS on Android Chrome.');
+    // Native share unavailable fallback
+    handleCopyEditionLink();
   };
 
   const handleCopyEditionLink = async () => {
@@ -824,13 +803,14 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
   const openPlatformShare = (platform: 'whatsapp' | 'facebook' | 'twitter' | 'linkedin') => {
     if (typeof window === 'undefined') return;
     const shareUrl = window.location.href;
-    const title = encodeURIComponent(edition?.name || 'Andhrapatrika ePaper');
+    const textPrefix = `READ ANDHARAPATRIKA Telugu Daily ePaper online: ${edition?.name || ''}`;
+    const encodedText = encodeURIComponent(textPrefix);
     const encodedUrl = encodeURIComponent(shareUrl);
 
     const map = {
-      whatsapp: `https://wa.me/?text=${title}%20${encodedUrl}`,
+      whatsapp: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-      twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${title}`,
+      twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`,
       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
     } as const;
 
