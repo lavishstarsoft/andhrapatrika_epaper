@@ -45,6 +45,7 @@ export default function ManageEditions() {
   const [dateFilterEnd, setDateFilterEnd] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [pageLoading, setPageLoading] = useState(false);
   const [deleteModal, setDeleteModal] = useState<Edition | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
@@ -122,6 +123,16 @@ export default function ManageEditions() {
     } finally {
       setDeleting(false);
     }
+  };
+
+  // Handle page change with loading animation
+  const handlePageChange = (newPage: number) => {
+    setPageLoading(true);
+    // Simulate page transition delay for better UX
+    setTimeout(() => {
+      setCurrentPage(newPage);
+      setPageLoading(false);
+    }, 300);
   };
 
   const getCategoryName = (categorySlug: string) => {
@@ -492,9 +503,17 @@ export default function ManageEditions() {
               
               {totalPages > 1 && (
                 <div className="flex items-center gap-2">
+                  {/* Page Loading Indicator */}
+                  {pageLoading && (
+                    <div className="flex items-center gap-2 px-3 py-2">
+                      <div className="w-4 h-4 border-2 border-[#3b5bdb] border-t-transparent rounded-full animate-spin" />
+                      <span className="text-xs text-gray-500">Loading...</span>
+                    </div>
+                  )}
+                  
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1 || pageLoading}
                     className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Previous
@@ -504,12 +523,13 @@ export default function ManageEditions() {
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                       <button
                         key={page}
-                        onClick={() => setCurrentPage(page)}
+                        onClick={() => handlePageChange(page)}
+                        disabled={pageLoading}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           currentPage === page
                             ? 'bg-[#3b5bdb] text-white'
                             : 'border border-gray-200 hover:bg-gray-50'
-                        }`}
+                        } ${pageLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {page}
                       </button>
@@ -517,8 +537,8 @@ export default function ManageEditions() {
                   </div>
                   
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages || pageLoading}
                     className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Next
