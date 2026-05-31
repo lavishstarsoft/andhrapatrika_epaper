@@ -31,12 +31,72 @@ interface Edition {
   pageCount: number;
 }
 
+function getDynamicEditionName(name: string, alias: string): string {
+  let cleanName = name || '';
+
+  // 1. Remove brand names (case-insensitive)
+  cleanName = cleanName.replace(/andhrapatrika/gi, '').replace(/andhra patrika/gi, '');
+
+  // 2. Remove common suffixes like "Telugu Daily", "Daily", "ePaper"
+  cleanName = cleanName.replace(/telugu daily/gi, '')
+                       .replace(/daily epaper/gi, '')
+                       .replace(/daily/gi, '')
+                       .replace(/epaper/gi, '');
+
+  // 3. Remove date formats
+  const monthRegex = /(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)/gi;
+  
+  cleanName = cleanName.replace(new RegExp(`-?\\\s*${monthRegex.source}\\\s+\\\d{1,2}(?:st|nd|rd|th)?,?\\\\s+\\\d{4}`, 'gi'), '')
+                       .replace(new RegExp(`-?\\\s*\\\d{1,2}\\\s+${monthRegex.source},?\\\\s+\\\d{4}`, 'gi'), '')
+                       .replace(/-?\\\s*\\\d{1,2}[\\\/\\-]\\\d{1,2}[\\\/\\-]\\\d{2,4}/g, '')
+                       .replace(/-?\\\s*\\\d{4}[\\\/\\-]\\\d{1,2}[\\\/\\-]\\\d{1,2}/g, '');
+
+  // 4. Remove any remaining trailing/leading dashes, pipes, slashes, and spaces
+  cleanName = cleanName.replace(/^[\s\-\|–—\/]+|[\s\-\|–—\/]+$/g, '').trim();
+
+  // If the cleanName is still empty/generic/too short, let's parse the alias
+  if (!cleanName || cleanName.toLowerCase() === 'main' || cleanName.toLowerCase() === 'edition') {
+    if (alias) {
+      let cleanAlias = alias.toLowerCase();
+      cleanAlias = cleanAlias.replace(/andhrapatrika/gi, '')
+                             .replace(/telugu-daily/gi, '')
+                             .replace(/daily/gi, '')
+                             .replace(/epaper/gi, '');
+                             
+      cleanAlias = cleanAlias.replace(new RegExp(`-?${monthRegex.source}-\\\d{1,2}-\\\d{4}`, 'gi'), '')
+                             .replace(/-?\\\d{1,2}-\\\d{1,2}-\\\d{4}/g, '')
+                             .replace(/-?\\\d{4}-\\\d{1,2}-\\\d{1,2}/g, '');
+      
+      cleanAlias = cleanAlias.replace(/^[\s\-\|–—\/]+|[\s\-\|–—\/]+$/g, '').trim();
+      
+      if (cleanAlias) {
+        cleanName = cleanAlias
+          .split('-')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+      }
+    }
+  }
+
+  if (!cleanName) {
+    cleanName = 'Main Edition';
+  }
+
+  // Format terms like "vja", "vij", "vija" nicely
+  cleanName = cleanName.replace(/\bvja\b/gi, 'VJA')
+                       .replace(/\bvij\b/gi, 'VIJ')
+                       .replace(/\bvija\b/gi, 'VIJA');
+
+  return cleanName;
+}
+
 interface EditionReaderProps {
   initialEdition: Edition;
   alias: string;
+  pageFlipSoundEnabled?: boolean;
 }
 
-export default function EditionReader({ initialEdition, alias }: EditionReaderProps) {
+export default function EditionReader({ initialEdition, alias, pageFlipSoundEnabled = true }: EditionReaderProps) {
   const [edition, setEdition] = useState<Edition>(initialEdition);
   const [loading, setLoading] = useState(false);
   const [mainImageLoading, setMainImageLoading] = useState(true);
@@ -237,7 +297,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
       setMainImageLoading(true);
     }
 
-    if (newIndex !== currentPage && pageFlipAudio) {
+    if (pageFlipSoundEnabled && newIndex !== currentPage && pageFlipAudio) {
       pageFlipAudio.currentTime = 0;
       pageFlipAudio.play().catch(e => console.log('Audio play failed:', e));
     }
@@ -827,28 +887,33 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
   return (
     <div className="flex flex-col">
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#2D2D2D] text-white safe-top">
-        <div className="flex items-center justify-between px-4 py-3">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 safe-top">
+        <div className="bg-[#2D2D2D] text-white flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <Link href="/" className="p-2 -ml-2 rounded-full active:bg-white/10 transition-colors">
               <ChevronLeft size={24} />
             </Link>
             <div className="flex flex-col">
               <span className="font-semibold text-sm">Page {currentPage + 1} of {totalPages}</span>
-              <span className="text-xs text-[#1721d8]">{formatDate(edition.date)}</span>
+              <span className="text-xs text-white">{formatDate(edition.date)}</span>
             </div>
           </div>
           <div className="flex items-center gap-1">
             <button onClick={() => setIsZoomOpen(true)} className="p-2.5 rounded-full active:bg-white/20 transition-all duration-200 active:scale-95 hover:bg-white/10">
               <ZoomIn size={20} />
             </button>
-            <button onClick={() => setIsCropOpen(true)} className="p-2.5 rounded-full active:bg-[#1721d8]/20 transition-all duration-200 active:scale-95 hover:bg-[#1721d8]/10">
-              <Crop size={20} className="text-[#1721d8]" />
+            <button onClick={() => setIsCropOpen(true)} className="p-2.5 rounded-full active:bg-white/20 transition-all duration-200 active:scale-95 hover:bg-white/10">
+              <Crop size={20} className="text-white" />
             </button>
-            <button onClick={handleMobileEpaperShare} className="p-2.5 rounded-full active:bg-[#1721d8]/20 transition-all duration-200 active:scale-95 hover:bg-[#1721d8]/10">
-              <Share2 size={20} className="text-[#1721d8]" />
+            <button onClick={handleMobileEpaperShare} className="p-2.5 rounded-full active:bg-white/20 transition-all duration-200 active:scale-95 hover:bg-white/10">
+              <Share2 size={20} className="text-white" />
             </button>
           </div>
+        </div>
+        {/* Dynamic Blue Strip */}
+        <div className="bg-[#1721d8] text-white py-1.5 px-4 flex justify-between items-center">
+          <span className="font-bold text-xs truncate pr-2">{getDynamicEditionName(edition.name, edition.alias)}</span>
+          <span className="text-[10px] font-medium whitespace-nowrap opacity-90">{formatDate(edition.date)}</span>
         </div>
       </div>
 
@@ -876,10 +941,11 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
         className="md:hidden fixed inset-0 bg-black z-40 flex flex-col"
         style={{
           height: '100dvh',
-          paddingTop: 'calc(var(--safe-area-top) + 52px)',
-          paddingBottom: 'calc(var(--safe-area-bottom) + 56px)',
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 82px)',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 56px)',
         }}
       >
+
         <div
           ref={mobileContainerRef}
           className="relative w-full flex-1 min-h-0 overflow-hidden"
@@ -896,7 +962,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                 initial="enter"
                 animate="center"
                 exit="exit"
-                className="absolute inset-0 w-full h-full bg-[#f3efe5]"
+                className="absolute inset-0 w-full h-full bg-white"
                 style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
               >
                 {getCurrentPageProxyUrl() && (
@@ -905,7 +971,7 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
                     src={getCurrentPageProxyUrl()}
                     alt={`Page ${currentPage + 1}`}
                     fill
-                    className="object-contain p-1"
+                    className="object-contain object-[center_95%]"
                     sizes="100vw"
                     priority
                     referrerPolicy="no-referrer"
@@ -1087,14 +1153,14 @@ export default function EditionReader({ initialEdition, alias }: EditionReaderPr
         </div>
         {!isCropOpen && (
           <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+8px)] left-0 right-0 z-50 px-2">
-            <div className="mx-auto w-fit max-w-full bg-[#1a1a1a]/90 border border-white/20 rounded-2xl px-2 py-2 shadow-[0_-4px_20px_rgba(0,0,0,0.45)] backdrop-blur-sm">
+            <div className="mx-auto w-fit max-w-full bg-[#1a1a1a]/90 border border-white/20 rounded-2xl px-2 py-2 backdrop-blur-sm">
               <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
                 {pages.map((p, i) => (
                   <button
                     key={`mobile-page-box-${p.pageNum}`}
                     onClick={() => setCurrentPage(i)}
                     className={`min-w-[34px] h-[34px] shrink-0 rounded-lg border text-xs font-bold transition-all active:scale-90 ${i === currentPage
-                      ? 'bg-[#1721d8] border-[#1721d8] text-white shadow-[0_0_10px_rgba(23,33,216,0.45)]'
+                      ? 'bg-[#1721d8] border-[#1721d8] text-white'
                       : 'bg-white/10 border-white/30 text-white'
                       }`}
                   >

@@ -35,6 +35,18 @@ async function getEdition(alias: string): Promise<Edition | null> {
   }
 }
 
+async function getSettings() {
+  try {
+    const client = await clientPromise;
+    const db = client.db('yellowsingam_epaper');
+    const settings = await db.collection('settings').findOne({ type: 'global' });
+    return settings;
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    return null;
+  }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const edition = await getEdition(id);
@@ -77,13 +89,18 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function EditionDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const edition = await getEdition(id);
+  const [edition, settings] = await Promise.all([
+    getEdition(id),
+    getSettings()
+  ]);
 
   if (!edition) {
     notFound();
   }
 
+  const pageFlipSoundEnabled = settings?.pageFlipSoundEnabled ?? true;
+
   return (
-    <EditionReader initialEdition={edition} alias={id} />
+    <EditionReader initialEdition={edition} alias={id} pageFlipSoundEnabled={pageFlipSoundEnabled} />
   );
 }

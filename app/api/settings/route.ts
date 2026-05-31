@@ -40,6 +40,7 @@ export async function GET() {
         customAdLink: '',
         headerHeight: 56,
         footerHeight: 64,
+        pageFlipSoundEnabled: true,
       };
       await db.collection('settings').insertOne(newSettings);
       settings = newSettings as any;
