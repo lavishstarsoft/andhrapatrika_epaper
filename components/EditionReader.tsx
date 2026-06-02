@@ -1463,7 +1463,6 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                 >
                   {/* Card Header - Banner Style with Text */}
                   <div className="bg-white flex flex-col border-b border-gray-100">
-                    <div className="h-1 bg-[#2D3A2D] w-full" />
                     <div className="pt-2 pb-1 flex items-center justify-center bg-white">
                       <img
                         src="/ys-logo.jpeg"
@@ -1506,11 +1505,11 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                   </div>
 
                   {/* Card Footer */}
-                  <div className="bg-[#1721d8] p-2 text-center">
-                    <div className="text-white font-bold text-[10px] uppercase tracking-tighter">
+                  <div className="bg-gray-50 p-2 text-center border-t border-black/10">
+                    <div className="text-[#2d2d2d] font-bold text-[10px] uppercase tracking-tighter">
                       andhrapatrikaa.com | {formatDate(edition?.date)} | P: {currentPage + 1} | CID: {currentClipId}
                     </div>
-                    <div className="text-white/90 text-[8px] font-medium mt-0.5">
+                    <div className="text-gray-500 text-[8px] font-medium mt-0.5">
                       For more details, visit our ePaper
                     </div>
                   </div>

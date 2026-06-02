@@ -64,21 +64,14 @@ export default async function ClipPage({ params, searchParams }: any) {
       {/* Branded Clip Card */}
       <div className="bg-white border border-black/15 shadow-2xl max-w-2xl w-full flex flex-col overflow-hidden animate-in fade-in zoom-in duration-500">
 
-        {/* Card Header with Banner Style & Branded Text */}
-        <div className="bg-white flex flex-col border-b border-gray-100">
-          <div className="h-2 bg-[#2D3A2D] w-full" />
-          <div className="h-4 bg-white" />
-          <div className="h-[1px] bg-black w-full opacity-10" />
-        </div>
-
         {/* Cropped Image Area */}
         <div className="bg-white flex flex-col">
           <ClipImagePreview src={cropImageUrl} />
         </div>
 
         {/* Branded Footer */}
-        <div className="bg-[#1721d8] p-4 text-center">
-          <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-white font-bold text-xs sm:text-sm uppercase tracking-tight">
+        <div className="bg-gray-50 p-4 text-center border-t border-black/10">
+          <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-[#2d2d2d] font-bold text-xs sm:text-sm uppercase tracking-tight">
             <span>andhrapatrikaa.com</span>
             <span className="hidden sm:inline opacity-30">|</span>
             <span>{date}</span>
@@ -87,7 +80,7 @@ export default async function ClipPage({ params, searchParams }: any) {
             <span className="hidden sm:inline opacity-30">|</span>
             <span>Clip ID: {cid}</span>
           </div>
-          <p className="text-white/80 text-[10px] sm:text-xs mt-1.5 font-medium leading-tight">
+          <p className="text-gray-500 text-[10px] sm:text-xs mt-1.5 font-medium leading-tight">
             For more details, visit andhrapatrikaa.com
           </p>
         </div>
