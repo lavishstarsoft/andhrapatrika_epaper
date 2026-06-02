@@ -85,11 +85,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 
   const firstPageUrl = edition.pages[0]?.url;
-  const cropSourceUrl = firstPageUrl ? appendVersionParam(firstPageUrl) : '/logo.png';
-  const cropApiUrl = `/api/crop?url=${encodeURIComponent(cropSourceUrl)}&x=0&y=0&w=100&h=25&inline=true`;
-  const absoluteImageUrl = cropApiUrl.startsWith('http')
-    ? cropApiUrl
-    : `${baseUrl.replace(/\/$/, '')}${cropApiUrl}`;
+  const ogImageSource = firstPageUrl ? appendVersionParam(firstPageUrl) : '/logo.png';
+  // Social crawlers are sensitive to slow dynamic OG image endpoints.
+  // Prefer a direct, cache-busted page image URL for reliable preview cards.
+  const absoluteImageUrl = ogImageSource.startsWith('http')
+    ? ogImageSource
+    : `${baseUrl.replace(/\/$/, '')}${ogImageSource}`;
 
   const editionSlug = edition.alias || id;
   const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/edition/${editionSlug}`;
