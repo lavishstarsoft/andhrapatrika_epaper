@@ -85,10 +85,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 
   const firstPageUrl = edition.pages[0]?.url;
-  const isMainEdition = /main-edition/i.test(edition.alias || '') || /main edition/i.test(edition.name || '');
+  const mainEditionKey = `${id} ${edition.alias || ''} ${edition.name || ''}`;
+  const isMainEdition = /main-edition|main edition/i.test(mainEditionKey);
   const sourceWithVersion = firstPageUrl ? appendVersionParam(firstPageUrl) : '/logo.png';
   const ogImageSource = isMainEdition && sourceWithVersion
-    ? `/api/crop?url=${encodeURIComponent(sourceWithVersion)}&x=0&y=0&w=100&h=25&inline=true`
+    ? `/api/crop?url=${encodeURIComponent(sourceWithVersion)}&x=0&y=0&w=100&h=25&inline=true&og=main25`
     : sourceWithVersion;
   const absoluteImageUrl = ogImageSource.startsWith('http')
     ? ogImageSource
