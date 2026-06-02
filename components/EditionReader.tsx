@@ -947,8 +947,9 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                 initial="enter"
                 animate="center"
                 exit="exit"
-                className="absolute inset-0 w-full h-full bg-white"
+                className="absolute inset-0 w-full h-full bg-white cursor-pointer"
                 style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
+                onClick={() => !isCropOpen && setIsZoomOpen(true)}
               >
                 {getCurrentPageProxyUrl() && (
                   <Image
