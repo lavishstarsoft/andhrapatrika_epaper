@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import clientPromise from '@/lib/mongodb';
 import EditionReader from '@/components/EditionReader';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { ObjectId } from 'mongodb';
 import { headers } from 'next/headers';
 
@@ -85,9 +85,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 
   const firstPageUrl = edition.pages[0]?.url;
-  const ogImageSource = firstPageUrl ? appendVersionParam(firstPageUrl) : '/logo.png';
-  // Social crawlers are sensitive to slow dynamic OG image endpoints.
-  // Prefer a direct, cache-busted page image URL for reliable preview cards.
+  const isMainEdition = /main-edition/i.test(edition.alias || '') || /main edition/i.test(edition.name || '');
+  const sourceWithVersion = firstPageUrl ? appendVersionParam(firstPageUrl) : '/logo.png';
+  const ogImageSource = isMainEdition && sourceWithVersion
+    ? `/api/crop?url=${encodeURIComponent(sourceWithVersion)}&x=0&y=0&w=100&h=25&inline=true`
+    : sourceWithVersion;
   const absoluteImageUrl = ogImageSource.startsWith('http')
     ? ogImageSource
     : `${baseUrl.replace(/\/$/, '')}${ogImageSource}`;
@@ -109,8 +111,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       images: [
         {
           url: absoluteImageUrl,
-          width: 800,
-          height: 1200,
+          width: isMainEdition ? 1200 : 800,
+          height: isMainEdition ? 300 : 1200,
           alt: edition.name,
         },
       ],
