@@ -17,25 +17,25 @@ export async function generateMetadata({ params, searchParams }: any): Promise<M
   const cropImageUrl = `${baseUrl}/api/clip-download?url=${encodeURIComponent(decodedUrl)}&x=${x}&y=${y}&w=${w}&h=${h}&date=${encodeURIComponent(displayDate)}&page=${page}&inline=true`;
 
   return {
-    title: `${decodedTitle} | Andhrapatrika ePaper | ${displayDate}`,
-    description: 'Shared snippet from Andhrapatrika Daily Telugu ePaper',
+    title: 'Andhrapatrika',
+    description: '',
     openGraph: {
-      title: `${decodedTitle} | Andhrapatrika ePaper`,
-      description: `Snippet from Page ${page} of ${displayDate} edition.`,
+      title: 'Andhrapatrika',
+      description: '',
       images: [
         {
           url: cropImageUrl,
           width: 800,
           height: 600,
-          alt: 'ePaper Clip',
+          alt: 'Andhrapatrika Clip',
         },
       ],
       type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${decodedTitle} | Andhrapatrika ePaper`,
-      description: `Snippet from Page ${page} of ${displayDate} edition.`,
+      title: 'Andhrapatrika',
+      description: '',
       images: [cropImageUrl],
     },
   };
