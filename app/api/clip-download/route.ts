@@ -88,15 +88,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid image' }, { status: 400 });
     }
 
-    const cropX = Math.round((x / 100) * metadata.width);
-    const cropY = Math.round((y / 100) * metadata.height);
-    const cropWidth = Math.round((w / 100) * metadata.width);
-    const cropHeight = Math.round((h / 100) * metadata.height);
+    // Use floor/ceil bounds to preserve exact right/bottom edges.
+    const left = Math.floor((x / 100) * metadata.width);
+    const top = Math.floor((y / 100) * metadata.height);
+    const right = Math.ceil(((x + w) / 100) * metadata.width);
+    const bottom = Math.ceil(((y + h) / 100) * metadata.height);
 
-    const finalX = Math.max(0, Math.min(cropX, metadata.width - 1));
-    const finalY = Math.max(0, Math.min(cropY, metadata.height - 1));
-    const finalWidth = Math.max(1, Math.min(cropWidth, metadata.width - finalX));
-    const finalHeight = Math.max(1, Math.min(cropHeight, metadata.height - finalY));
+    const finalX = Math.max(0, Math.min(left, metadata.width - 1));
+    const finalY = Math.max(0, Math.min(top, metadata.height - 1));
+    const finalRight = Math.max(finalX + 1, Math.min(right, metadata.width));
+    const finalBottom = Math.max(finalY + 1, Math.min(bottom, metadata.height));
+    const finalWidth = finalRight - finalX;
+    const finalHeight = finalBottom - finalY;
 
     const croppedBuffer = await image
       .extract({

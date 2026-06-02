@@ -120,6 +120,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
   const [isQuickShareOpen, setIsQuickShareOpen] = useState(false);
   const [generatedLink, setGeneratedLink] = useState('');
   const [crop, setCrop] = useState({ x: 20, y: 25, w: 60, h: 35 });
+  const MIN_CROP_SIZE_PERCENT = 5;
   const [miniMap, setMiniMap] = useState({ top: 0, left: 0, width: 100, height: 100 });
   const [isMiniMapMinimized, setIsMiniMapMinimized] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -141,6 +142,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
   const mobileContainerRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const zoomContainerRef = useRef<HTMLDivElement>(null);
+  const zoomImageContainerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ type: 'move' | 'resize', handle?: string, startX: number, startY: number, startCrop: typeof crop } | null>(null);
   const touchRef = useRef<{ type: 'move' | 'resize', handle?: string, startX: number, startY: number, startCrop: typeof crop, containerElement?: HTMLDivElement } | null>(null);
 
@@ -285,17 +287,26 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
 
   // Keep viewport fixed while adjusting crop on mobile.
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+    const previousOverscroll = document.body.style.overscrollBehavior;
+
     if (isCropOpen) {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      document.body.style.overscrollBehavior = 'none';
     } else {
       document.body.style.touchAction = '';
-    }
-    return () => {
-      document.body.style.touchAction = '';
+      document.body.style.overscrollBehavior = '';
       if (!isZoomOpen) {
         document.body.style.overflow = '';
       }
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+      document.body.style.overscrollBehavior = previousOverscroll;
     };
   }, [isCropOpen, isZoomOpen]);
 
@@ -478,17 +489,17 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
       let newW = startCrop.w;
       let newH = startCrop.h;
 
-      if (handle.includes('e')) newW = Math.min(100 - startCrop.x, Math.max(15, startCrop.w + dx));
-      if (handle.includes('s')) newH = Math.min(100 - startCrop.y, Math.max(15, startCrop.h + dy));
+      if (handle.includes('e')) newW = Math.min(100 - startCrop.x, Math.max(MIN_CROP_SIZE_PERCENT, startCrop.w + dx));
+      if (handle.includes('s')) newH = Math.min(100 - startCrop.y, Math.max(MIN_CROP_SIZE_PERCENT, startCrop.h + dy));
       if (handle.includes('w')) {
-        const maxDx = startCrop.w - 15;
+        const maxDx = startCrop.w - MIN_CROP_SIZE_PERCENT;
         const actualDx = Math.min(dx, maxDx);
         const boundedDx = Math.max(-startCrop.x, actualDx);
         newX = startCrop.x + boundedDx;
         newW = startCrop.w - boundedDx;
       }
       if (handle.includes('n')) {
-        const maxDy = startCrop.h - 15;
+        const maxDy = startCrop.h - MIN_CROP_SIZE_PERCENT;
         const actualDy = Math.min(dy, maxDy);
         const boundedDy = Math.max(-startCrop.y, actualDy);
         newY = startCrop.y + boundedDy;
@@ -696,6 +707,12 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
     setImageTransform({ scale: 1, x: 0, y: 0 });
   };
 
+  const handleCropToggle = () => {
+    // Do not alter zoom/pan/crop values while toggling crop mode.
+    // This keeps visual image position and selected crop area perfectly aligned.
+    setIsCropOpen((prev) => !prev);
+  };
+
   const isAnyZoomActive =
     !isFitToScreen ||
     desktopZoomScale > 1 ||
@@ -880,14 +897,14 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
         setCrop({ x: newX, y: newY, w: startCrop.w, h: startCrop.h });
       } else if (type === 'resize' && handle) {
         let newX = startCrop.x, newY = startCrop.y, newW = startCrop.w, newH = startCrop.h;
-        if (handle.includes('e')) newW = Math.min(100 - startCrop.x, Math.max(10, startCrop.w + dx));
-        if (handle.includes('s')) newH = Math.min(100 - startCrop.y, Math.max(10, startCrop.h + dy));
+        if (handle.includes('e')) newW = Math.min(100 - startCrop.x, Math.max(MIN_CROP_SIZE_PERCENT, startCrop.w + dx));
+        if (handle.includes('s')) newH = Math.min(100 - startCrop.y, Math.max(MIN_CROP_SIZE_PERCENT, startCrop.h + dy));
         if (handle.includes('w')) {
-          const boundedDx = Math.max(-startCrop.x, Math.min(dx, startCrop.w - 10));
+          const boundedDx = Math.max(-startCrop.x, Math.min(dx, startCrop.w - MIN_CROP_SIZE_PERCENT));
           newX = startCrop.x + boundedDx; newW = startCrop.w - boundedDx;
         }
         if (handle.includes('n')) {
-          const boundedDy = Math.max(-startCrop.y, Math.min(dy, startCrop.h - 10));
+          const boundedDy = Math.max(-startCrop.y, Math.min(dy, startCrop.h - MIN_CROP_SIZE_PERCENT));
           newY = startCrop.y + boundedDy; newH = startCrop.h - boundedDy;
         }
         setCrop({ x: newX, y: newY, w: newW, h: newH });
@@ -905,6 +922,8 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
 
   const mobileCropLayout = getCropLayout(mobileContainerRef.current);
   const desktopCropLayout = getCropLayout(containerRef.current);
+  const zoomCropLayout = getCropLayout(zoomImageContainerRef.current);
+  const mobileZoomCropControlScale = imageTransform.scale > 1 ? 1 / imageTransform.scale : 1;
 
   return (
     <div className="flex flex-col">
@@ -1651,7 +1670,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setIsCropOpen(!isCropOpen)}
+                  onClick={handleCropToggle}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition-all shadow-md ${
                     isCropOpen ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
                   }`}
@@ -1686,7 +1705,10 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                   style={{ width: isFitToScreen ? '100%' : `${1200 * desktopZoomScale}px` }}
                   onClick={handleZoomImageClick}
                 >
-                  <div className={`relative ${isFitToScreen ? 'h-full aspect-[2/3]' : 'w-full aspect-[2/3]'}`}>
+                  <div
+                    ref={zoomImageContainerRef}
+                    className={`relative ${isFitToScreen ? 'h-full aspect-[2/3]' : 'w-full aspect-[2/3]'}`}
+                  >
                     <Image
                       src={getCurrentPageProxyUrl()}
                       alt="Zoomed View"
@@ -1703,10 +1725,10 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                         <div
                           className="absolute shadow-[0_0_0_9999px_rgba(0,0,0,0.6)] pointer-events-auto border-2 border-white cursor-move"
                           style={{
-                            top: `${crop.y}%`,
-                            left: `${crop.x}%`,
-                            width: `${crop.w}%`,
-                            height: `${crop.h}%`,
+                            top: zoomCropLayout ? zoomCropLayout.cropTop : `${crop.y}%`,
+                            left: zoomCropLayout ? zoomCropLayout.cropLeft : `${crop.x}%`,
+                            width: zoomCropLayout ? zoomCropLayout.cropWidth : `${crop.w}%`,
+                            height: zoomCropLayout ? zoomCropLayout.cropHeight : `${crop.h}%`,
                           }}
                           onPointerDown={(e) => handlePointerDown(e, 'move')}
                         >
@@ -1758,8 +1780,8 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                 ref={mobileZoomRef}
                 className="md:hidden w-full h-full relative overflow-hidden"
                 onTouchStart={handleZoomTouchStart}
-                onTouchMove={handleZoomTouchMove}
-                onTouchEnd={handleZoomTouchEnd}
+                onTouchMove={isCropOpen ? handleTouchMove : handleZoomTouchMove}
+                onTouchEnd={isCropOpen ? handleTouchEnd : handleZoomTouchEnd}
               >
                 <div
                   className="relative w-full aspect-[2/3] mx-auto transition-transform duration-0 will-change-transform"
@@ -1827,36 +1849,75 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                           <div className="absolute left-2/3 top-0 bottom-0 w-[1px] bg-white/40" />
                         </div>
 
-                        <div className="absolute left-0 right-0 flex justify-center gap-3 transition-all duration-300" style={{ top: crop.y < 12 ? 'calc(100% + 12px)' : '-60px' }}>
+                        <div
+                          className="absolute left-0 right-0 flex justify-center gap-3 transition-all duration-300"
+                          style={{
+                            top: crop.y < 12 ? 'calc(100% + 12px)' : '-60px',
+                            transform: `scale(${mobileZoomCropControlScale})`,
+                            transformOrigin: 'center center',
+                          }}
+                        >
                           <button onClick={handleShareClick} className="bg-[#007bff] text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-bold text-sm"><Share2 size={18} /> Share</button>
                           <button onClick={() => setIsCropOpen(false)} className="bg-[#1a1a1a] text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-bold text-sm border border-white/20"><X size={18} /> Cancel</button>
                         </div>
 
                         {/* Corner Resize Handles */}
-                        <div className="absolute -top-4 -left-4 w-10 h-10 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 'nw')}>
+                        <div
+                          className="absolute -top-4 -left-4 w-10 h-10 flex items-center justify-center"
+                          style={{ transform: `scale(${mobileZoomCropControlScale})`, transformOrigin: 'center center' }}
+                          onTouchStart={(e) => handleTouchStart(e, 'resize', 'nw')}
+                        >
                           <div className={`w-6 h-6 rounded-full border-2 ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                         </div>
-                        <div className="absolute -top-4 -right-4 w-10 h-10 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 'ne')}>
+                        <div
+                          className="absolute -top-4 -right-4 w-10 h-10 flex items-center justify-center"
+                          style={{ transform: `scale(${mobileZoomCropControlScale})`, transformOrigin: 'center center' }}
+                          onTouchStart={(e) => handleTouchStart(e, 'resize', 'ne')}
+                        >
                           <div className={`w-6 h-6 rounded-full border-2 ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                         </div>
-                        <div className="absolute -bottom-4 -left-4 w-10 h-10 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 'sw')}>
+                        <div
+                          className="absolute -bottom-4 -left-4 w-10 h-10 flex items-center justify-center"
+                          style={{ transform: `scale(${mobileZoomCropControlScale})`, transformOrigin: 'center center' }}
+                          onTouchStart={(e) => handleTouchStart(e, 'resize', 'sw')}
+                        >
                           <div className={`w-6 h-6 rounded-full border-2 ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                         </div>
-                        <div className="absolute -bottom-4 -right-4 w-10 h-10 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 'se')}>
+                        <div
+                          className="absolute -bottom-4 -right-4 w-10 h-10 flex items-center justify-center"
+                          style={{ transform: `scale(${mobileZoomCropControlScale})`, transformOrigin: 'center center' }}
+                          onTouchStart={(e) => handleTouchStart(e, 'resize', 'se')}
+                        >
                           <div className={`w-6 h-6 rounded-full border-2 ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                         </div>
 
                         {/* Edge Resize Handles */}
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-12 h-6 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 'n')}>
+                        <div
+                          className="absolute -top-3 left-1/2 -translate-x-1/2 w-12 h-6 flex items-center justify-center"
+                          style={{ transform: `scale(${mobileZoomCropControlScale})`, transformOrigin: 'center center' }}
+                          onTouchStart={(e) => handleTouchStart(e, 'resize', 'n')}
+                        >
                           <div className={`w-8 h-2 rounded-full ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                         </div>
-                        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-12 h-6 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 's')}>
+                        <div
+                          className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-12 h-6 flex items-center justify-center"
+                          style={{ transform: `scale(${mobileZoomCropControlScale})`, transformOrigin: 'center center' }}
+                          onTouchStart={(e) => handleTouchStart(e, 'resize', 's')}
+                        >
                           <div className={`w-8 h-2 rounded-full ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                         </div>
-                        <div className="absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-12 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 'w')}>
+                        <div
+                          className="absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-12 flex items-center justify-center"
+                          style={{ transform: `scale(${mobileZoomCropControlScale})`, transformOrigin: 'center center' }}
+                          onTouchStart={(e) => handleTouchStart(e, 'resize', 'w')}
+                        >
                           <div className={`w-2 h-8 rounded-full ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                         </div>
-                        <div className="absolute top-1/2 -right-3 -translate-y-1/2 w-6 h-12 flex items-center justify-center" onTouchStart={(e) => handleTouchStart(e, 'resize', 'e')}>
+                        <div
+                          className="absolute top-1/2 -right-3 -translate-y-1/2 w-6 h-12 flex items-center justify-center"
+                          style={{ transform: `scale(${mobileZoomCropControlScale})`, transformOrigin: 'center center' }}
+                          onTouchStart={(e) => handleTouchStart(e, 'resize', 'e')}
+                        >
                           <div className={`w-2 h-8 rounded-full ${isDragging ? 'bg-[#1721d8]' : 'bg-white'} shadow-lg`} />
                         </div>
                       </div>
