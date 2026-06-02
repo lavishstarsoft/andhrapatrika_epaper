@@ -535,8 +535,8 @@ export default function PublishEdition() {
             setPdfProgress(Math.round(((pageNum - 1) / numPages) * 100));
             const page = await pdf.getPage(pageNum);
             
-            // Render at 3.0x scale for crisp, high-resolution reading layout on devices
-            const viewport = page.getViewport({ scale: 3.0 });
+            // Render at 5.0x scale for crisp, high-resolution reading layout on devices (matches PDF clarity)
+            const viewport = page.getViewport({ scale: 5.0 });
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             if (!context) continue;

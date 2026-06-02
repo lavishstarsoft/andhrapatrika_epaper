@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
               );
             }
             console.log('Starting PDF to images conversion for:', file.name, 'size:', buffer.length);
-            const doc = await pdfToImages(buffer, { scale: 3.0 });
+            const doc = await pdfToImages(buffer, { scale: 5.0 });
             let pageCount = 0;
             for await (const pagePng of doc) {
               pageCount++;
