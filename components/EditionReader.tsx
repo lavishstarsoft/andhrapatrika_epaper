@@ -808,14 +808,12 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
   const openPlatformShare = (platform: 'whatsapp' | 'facebook' | 'twitter' | 'linkedin') => {
     if (typeof window === 'undefined') return;
     const shareUrl = window.location.href;
-    const textPrefix = `READ ANDHARAPATRIKA Telugu Daily ePaper online: ${edition?.name || ''}`;
-    const encodedText = encodeURIComponent(textPrefix);
     const encodedUrl = encodeURIComponent(shareUrl);
 
     const map = {
-      whatsapp: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
+      whatsapp: `https://wa.me/?text=${encodedUrl}`,
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-      twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`,
+      twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}`,
       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
     } as const;
 
@@ -1366,8 +1364,6 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                   onClick={() => {
                     if (navigator.share) {
                       navigator.share({
-                        title: edition?.name || 'Andhrapatrika ePaper Clip',
-                        text: 'Check out this ePaper clip',
                         url: generatedLink
                       }).catch(err => console.log('Share failed:', err));
                     }
@@ -1402,14 +1398,14 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                   <Facebook size={24} />
                 </button>
                 <button
-                  onClick={() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(generatedLink)}&text=${encodeURIComponent(edition?.name || 'ePaper Clip')}`, '_blank')}
+                  onClick={() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(generatedLink)}`, '_blank')}
                   className="bg-black text-white p-3 rounded-sm hover:bg-gray-800 transition-colors flex items-center justify-center w-[48px] h-[48px]"
                   title="X (Twitter)"
                 >
                   <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l16 16M4 20L20 4" /></svg>
                 </button>
                 <button
-                  onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(edition?.name + ' ' + generatedLink)}`, '_blank')}
+                  onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(generatedLink)}`, '_blank')}
                   className="bg-[#25D366] text-white p-3 rounded-sm hover:bg-green-600 transition-colors"
                   title="WhatsApp"
                 >
@@ -1423,7 +1419,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                   <Linkedin size={24} />
                 </button>
                 <button
-                  onClick={() => window.open(`https://t.me/share/url?url=${encodeURIComponent(generatedLink)}&text=${encodeURIComponent(edition?.name || 'ePaper Clip')}`, '_blank')}
+                  onClick={() => window.open(`https://t.me/share/url?url=${encodeURIComponent(generatedLink)}`, '_blank')}
                   className="bg-[#229ED9] text-white p-3 rounded-sm hover:bg-blue-500 transition-colors"
                   title="Telegram"
                 >

@@ -54,8 +54,6 @@ export default function ClipActions({ shareUrl, downloadUrl, readUrl }: ClipActi
           onClick={() => {
             if (navigator.share) {
               navigator.share({
-                title: 'Andhrapatrika Clip',
-                text: 'Check out this ePaper clip',
                 url: shareUrl,
               }).catch(() => undefined);
             } else {
@@ -89,14 +87,14 @@ export default function ClipActions({ shareUrl, downloadUrl, readUrl }: ClipActi
           <Facebook size={22} />
         </button>
         <button
-          onClick={() => open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('Andhrapatrika Clip')}`)}
+          onClick={() => open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}`)}
           className="bg-black text-white p-3 rounded-sm hover:bg-gray-800 transition-colors"
           title="X (Twitter)"
         >
           <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l16 16M4 20L20 4" /></svg>
         </button>
         <button
-          onClick={() => open(`https://wa.me/?text=${encodeURIComponent(`Andhrapatrika Clip ${shareUrl}`)}`)}
+          onClick={() => open(`https://wa.me/?text=${encodeURIComponent(shareUrl)}`)}
           className="bg-[#25D366] text-white p-3 rounded-sm hover:bg-green-600 transition-colors"
           title="WhatsApp"
         >
@@ -110,7 +108,7 @@ export default function ClipActions({ shareUrl, downloadUrl, readUrl }: ClipActi
           <Linkedin size={22} />
         </button>
         <button
-          onClick={() => open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('Andhrapatrika Clip')}`)}
+          onClick={() => open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}`)}
           className="bg-[#229ED9] text-white p-3 rounded-sm hover:bg-blue-500 transition-colors"
           title="Telegram"
         >
