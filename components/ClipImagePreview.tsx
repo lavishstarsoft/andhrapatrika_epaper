@@ -11,7 +11,12 @@ export default function ClipImagePreview({ src }: ClipImagePreviewProps) {
   const [loading, setLoading] = useState(true);
   const [isZoomed, setIsZoomed] = useState(false);
   const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDraggingState, setIsDraggingState] = useState(false);
+  
   const imgRef = useRef<HTMLImageElement>(null);
+  const isDragging = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0 });
 
   // Check if image is already cached/complete on mount
   useEffect(() => {
@@ -27,18 +32,58 @@ export default function ClipImagePreview({ src }: ClipImagePreviewProps) {
 
   const handleZoomOut = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setScale(prev => Math.max(prev - 0.25, 0.5));
+    setScale(prev => {
+      const next = Math.max(prev - 0.25, 0.5);
+      if (next === 1) setPosition({ x: 0, y: 0 });
+      return next;
+    });
   };
 
   const handleReset = (e: React.MouseEvent) => {
     e.stopPropagation();
     setScale(1);
+    setPosition({ x: 0, y: 0 });
   };
 
   const handleClose = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsZoomed(false);
     setScale(1);
+    setPosition({ x: 0, y: 0 });
+  };
+
+  // Pointer dragging handlers for touch and mouse
+  const handlePointerDown = (e: React.PointerEvent) => {
+    // Only allow dragging when zoomed in
+    if (scale <= 1) return;
+    isDragging.current = true;
+    setIsDraggingState(true);
+    dragStart.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging.current) return;
+    const newX = e.clientX - dragStart.current.x;
+    const newY = e.clientY - dragStart.current.y;
+    
+    // Set bounding limits based on scale to prevent dragging completely out of view
+    const limitX = window.innerWidth * (scale - 0.5);
+    const limitY = window.innerHeight * (scale - 0.5);
+    
+    setPosition({ 
+      x: Math.max(-limitX, Math.min(limitX, newX)), 
+      y: Math.max(-limitY, Math.min(limitY, newY)) 
+    });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    isDragging.current = false;
+    setIsDraggingState(false);
+    e.currentTarget.releasePointerCapture(e.pointerId);
   };
 
   return (
@@ -68,10 +113,12 @@ export default function ClipImagePreview({ src }: ClipImagePreviewProps) {
           onClick={handleClose}
         >
           {/* Top Bar Header */}
-          <div className="flex items-center justify-between p-4 bg-black/60 backdrop-blur-md text-white border-b border-white/10 shrink-0 z-10">
+          <div className="flex items-center justify-between p-4 bg-black/60 backdrop-blur-md text-white border-b border-white/10 shrink-0 z-10 select-none">
             <div className="flex flex-col">
               <span className="font-bold text-sm">Snippet Zoom View</span>
-              <span className="text-[10px] text-[#0088ff] font-bold uppercase tracking-wider">Tap anywhere to close</span>
+              <span className="text-[10px] text-[#0088ff] font-bold uppercase tracking-wider">
+                {scale > 1 ? 'Drag with finger/mouse to pan' : 'Tap anywhere to close'}
+              </span>
             </div>
             <button 
               onClick={handleClose}
@@ -83,25 +130,31 @@ export default function ClipImagePreview({ src }: ClipImagePreviewProps) {
           </div>
 
           {/* Interactive Image Container */}
-          <div className="flex-1 relative overflow-auto no-scrollbar bg-black/40 flex items-center justify-center p-4">
+          <div 
+            className="flex-1 relative overflow-hidden bg-black/40 flex items-center justify-center p-4 touch-none select-none"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+          >
             <div 
-              className="transition-transform duration-200 ease-out origin-center"
+              className="origin-center pointer-events-none select-none"
               style={{
-                transform: `scale(${scale})`,
+                transform: `translate3d(${position.x}px, ${position.y}px, 0) scale(${scale})`,
+                transition: isDraggingState ? 'none' : 'transform 0.15s ease-out'
               }}
-              onClick={(e) => e.stopPropagation()} // Prevent closing when tapping on the zoom container itself
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={src}
                 alt="Zoomed Snippet"
-                className="max-w-[90vw] max-h-[75vh] object-contain shadow-2xl"
+                className="max-w-[90vw] max-h-[75vh] object-contain shadow-2xl pointer-events-none select-none"
+                draggable={false}
               />
             </div>
           </div>
 
           {/* Bottom Floating Zoom Controls */}
-          <div className="absolute bottom-6 left-0 right-0 flex justify-center p-4 pointer-events-none z-10">
+          <div className="absolute bottom-6 left-0 right-0 flex justify-center p-4 pointer-events-none z-10 select-none">
             <div className="flex items-center gap-1.5 pointer-events-auto bg-black/60 backdrop-blur-md p-1.5 rounded-full border border-white/10 shadow-xl">
               <button
                 onClick={handleZoomOut}
@@ -113,7 +166,7 @@ export default function ClipImagePreview({ src }: ClipImagePreviewProps) {
               </button>
               <button
                 onClick={handleReset}
-                disabled={scale === 1}
+                disabled={scale === 1 && position.x === 0 && position.y === 0}
                 className="p-2.5 hover:bg-white/10 disabled:opacity-20 rounded-full text-white transition-all active:scale-90"
                 title="Reset Zoom"
               >
