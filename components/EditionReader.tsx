@@ -794,7 +794,28 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
     e.stopPropagation();
     const currentPageUrl = getVersionedPageUrl();
     if (!currentPageUrl) return;
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://andhrapatrikaa.com';
+    const getPublicBaseUrl = () => {
+      if (typeof window === 'undefined') return 'https://www.andhrapatrikaa.com';
+      const { origin, hostname } = window.location;
+      const isPrivateHost =
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname.startsWith('10.') ||
+        hostname.startsWith('192.168.') ||
+        /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
+
+      if (isPrivateHost) {
+        return 'https://www.andhrapatrikaa.com';
+      }
+
+      if (origin.includes('://andhrapatrikaa.com')) {
+        return origin.replace('://andhrapatrikaa.com', '://www.andhrapatrikaa.com');
+      }
+
+      return origin;
+    };
+
+    const baseUrl = getPublicBaseUrl();
     const clipId = `C-${Math.floor(100000 + Math.random() * 900000)}`;
     const displayDate = formatDate(edition?.date);
     const pageNum = currentPage + 1;
