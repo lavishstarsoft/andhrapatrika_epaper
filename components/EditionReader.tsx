@@ -279,8 +279,8 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
 
   const handleZoomIn = () => {
     setIsFitToScreen(false);
-    setDesktopZoomScale(prev => Math.min(prev + 0.25, 3));
-    setImageTransform(prev => ({ ...prev, scale: Math.min(prev.scale + 0.25, 4) }));
+    setDesktopZoomScale(prev => Math.min(prev + 0.25, 8));
+    setImageTransform(prev => ({ ...prev, scale: Math.min(prev.scale + 0.25, 8) }));
   };
 
   const handleZoomOut = () => {
@@ -499,7 +499,12 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
           if (rect) {
             const centerX = touches[0].x - rect.left - rect.width / 2;
             const centerY = touches[0].y - rect.top - rect.height / 2;
-            setImageTransform({ scale: 2.5, x: -centerX, y: -centerY });
+            const scale = 5.0;
+            const maxX = (rect.width * (scale - 1)) / 2;
+            const maxY = (rect.height * (scale - 1)) / 2;
+            const targetX = Math.max(-maxX, Math.min(maxX, -centerX * (scale - 1)));
+            const targetY = Math.max(-maxY, Math.min(maxY, -centerY * (scale - 1)));
+            setImageTransform({ scale, x: targetX, y: targetY });
           }
         }
         lastTapRef.current = 0;
@@ -518,7 +523,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
     if (touches.length === 2 && startData.touches.length >= 2) {
       const currentDistance = getDistance(touches[0], touches[1]);
       const scaleDiff = currentDistance / lastDistanceRef.current;
-      const newScale = Math.min(4, Math.max(1, startData.scale * scaleDiff));
+      const newScale = Math.min(8, Math.max(1, startData.scale * scaleDiff));
       const centerX = (touches[0].x + touches[1].x) / 2;
       const centerY = (touches[0].y + touches[1].y) / 2;
       const startCenterX = (startData.touches[0].x + startData.touches[1].x) / 2;

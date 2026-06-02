@@ -7,11 +7,17 @@ import path from 'path';
 import sharp from 'sharp';
 
 let pdfToImages: any = null;
-try {
-  pdfToImages = require('pdf-to-img').pdf;
-  console.log('pdf-to-img loaded successfully');
-} catch (loadErr) {
-  console.error('Failed to load pdf-to-img at startup:', loadErr);
+async function getPdfToImages() {
+  if (!pdfToImages) {
+    try {
+      const mod = await import('pdf-to-img');
+      pdfToImages = mod.pdf;
+      console.log('pdf-to-img loaded successfully via dynamic import');
+    } catch (loadErr) {
+      console.error('Failed to load pdf-to-img dynamically:', loadErr);
+    }
+  }
+  return pdfToImages;
 }
 
 function isPdfUpload(file: File, buffer: Buffer): boolean {
@@ -207,7 +213,8 @@ export async function POST(request: NextRequest) {
           nextPageNum += 1;
         } else if (isPdfUpload(file, buffer)) {
           try {
-            if (!pdfToImages) {
+            const pdfToImagesFn = await getPdfToImages();
+            if (!pdfToImagesFn) {
               return NextResponse.json(
                 {
                   error: 'PDF processing not available. Try uploading as images instead.',
@@ -216,7 +223,7 @@ export async function POST(request: NextRequest) {
               );
             }
             console.log('Starting PDF to images conversion for:', file.name, 'size:', buffer.length);
-            const doc = await pdfToImages(buffer, { scale: 5.0 });
+            const doc = await pdfToImagesFn(buffer, { scale: 5.0 });
             let pageCount = 0;
             for await (const pagePng of doc) {
               pageCount++;
