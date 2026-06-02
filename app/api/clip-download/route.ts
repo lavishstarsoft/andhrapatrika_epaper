@@ -115,8 +115,7 @@ export async function GET(request: NextRequest) {
     const cropW = croppedMeta.width || finalWidth;
     const cropH = croppedMeta.height || finalHeight;
 
-    const maxLogoWidth = Math.min(cropW, 1200);
-    const logoTargetWidth = Math.max(300, Math.round(maxLogoWidth * 0.95));
+    const logoTargetWidth = Math.max(150, Math.min(300, Math.round(cropW * 0.20)));
     const resizedLogoBuffer = await sharp(logoBuffer)
       .resize({ width: logoTargetWidth })
       .flatten({ background: '#ffffff' })
@@ -147,10 +146,10 @@ export async function GET(request: NextRequest) {
     const line2 = 'https://andhrapatrikaa.com/';
     const hasLine1 = line1.length > 0;
     
-    const line1Size = Math.max(18, Math.round(cropW * 0.038));
-    const line2Size = Math.max(14, Math.round(line1Size * 0.75));
-    const lineGap = Math.round(line1Size * 0.4);
-    const textPaddingY = Math.round(line1Size * 0.4);
+    const line1Size = Math.max(12, Math.min(26, Math.round(cropW * 0.024)));
+    const line2Size = Math.max(10, Math.min(20, Math.round(cropW * 0.018)));
+    const lineGap = 2; // Almost no gap
+    const textPaddingY = 1; // Minimal padding
     
     const textBlockHeight =
       textPaddingY * 2 + (hasLine1 ? line1Size : 0) + lineGap + line2Size;
@@ -181,13 +180,17 @@ export async function GET(request: NextRequest) {
     
     const textBuffer = canvas.toBuffer('image/png');
 
-    const padding = 20; // Reduced from 24
-    const textGap = 8;  // Reduced from 12
+    const padding = 4; // Minimal padding around logo (top/bottom space in header)
+    const textGap = 4;  // Minimal gap between logo and text block
     const headerHeight = logoHeight + padding * 2 + textGap + textBlockHeight;
+
+    // Add space below the header before the cropped newspaper clipping begins
+    const headerBottomGap = Math.max(8, Math.min(24, Math.round(cropW * 0.015)));
+
     const finalCanvas = sharp({
       create: {
         width: cropW,
-        height: headerHeight + cropH,
+        height: headerHeight + headerBottomGap + cropH,
         channels: 4,
         background: '#ffffff',
       },
@@ -207,7 +210,7 @@ export async function GET(request: NextRequest) {
         },
         {
           input: croppedBuffer,
-          top: headerHeight,
+          top: headerHeight + headerBottomGap,
           left: 0,
         },
       ])
