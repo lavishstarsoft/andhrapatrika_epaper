@@ -1459,7 +1459,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
               {/* Branded Preview Card */}
               <div className="flex justify-center p-2">
                 <div
-                  className="bg-white border-[1px] border-gray-300 shadow-xl inline-flex flex-col max-w-full"
+                  className="bg-white border-[3px] border-gray-300 shadow-xl inline-flex flex-col max-w-full"
                 >
                   {/* Card Header - Banner Style with Text */}
                   <div className="bg-white flex flex-col border-b border-gray-100">
