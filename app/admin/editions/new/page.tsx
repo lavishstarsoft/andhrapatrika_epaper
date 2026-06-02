@@ -222,18 +222,18 @@ export default function PublishEdition() {
   const [pdfProgress, setPdfProgress] = useState(0);
 
   /** Keep under ~2MB so proxies (e.g. Vercel ~4.5MB) never reject; presigned path has no body limit. */
-  const MAX_FULL_WEBP_BYTES = 2 * 1024 * 1024;
+  const MAX_FULL_JPG_BYTES = 2 * 1024 * 1024;
 
-  const blobToWebp = (
+  const blobToJpeg = (
     canvas: HTMLCanvasElement,
     quality: number
   ): Promise<Blob | null> =>
     new Promise((resolve) => {
-      canvas.toBlob((b) => resolve(b), 'image/webp', quality);
+      canvas.toBlob((b) => resolve(b), 'image/jpeg', quality);
     });
 
   /** Resize + lower quality until file is small enough for /api/upload/image fallback. */
-  const compressFullWebpForUpload = async (file: File): Promise<Blob> => {
+  const compressFallbackJpeg = async (file: File): Promise<Blob> => {
     if (!file.type.startsWith('image/')) return file;
 
     return new Promise((resolve, reject) => {
@@ -242,8 +242,8 @@ export default function PublishEdition() {
 
       img.onload = async () => {
         try {
-          let maxSide = Math.min(1800, Math.max(img.width, img.height));
-          let quality = 0.70;
+          let maxSide = Math.min(4000, Math.max(img.width, img.height));
+          let quality = 0.95;
 
           for (let attempt = 0; attempt < 35; attempt++) {
             const ratio = Math.min(maxSide / img.width, maxSide / img.height, 1);
@@ -261,23 +261,23 @@ export default function PublishEdition() {
             }
             ctx.drawImage(img, 0, 0, targetW, targetH);
 
-            let blob = await blobToWebp(canvas, quality);
+            let blob = await blobToJpeg(canvas, quality);
             if (!blob) {
               URL.revokeObjectURL(objectUrl);
               reject(new Error('Could not encode image'));
               return;
             }
 
-            if (blob.size <= MAX_FULL_WEBP_BYTES) {
+            if (blob.size <= MAX_FULL_JPG_BYTES) {
               URL.revokeObjectURL(objectUrl);
               resolve(blob);
               return;
             }
 
-            if (quality > 0.20) {
-              quality -= 0.04;
+            if (quality > 0.50) {
+              quality -= 0.03;
             } else {
-              maxSide = Math.max(600, Math.floor(maxSide * 0.82));
+              maxSide = Math.max(800, Math.floor(maxSide * 0.85));
             }
           }
 
@@ -298,7 +298,7 @@ export default function PublishEdition() {
     });
   };
 
-  const compressThumbWebp = async (file: File): Promise<Blob> => {
+  const compressThumbJpeg = async (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const img = new window.Image();
       const objectUrl = URL.createObjectURL(file);
@@ -318,7 +318,7 @@ export default function PublishEdition() {
           return;
         }
         ctx.drawImage(img, 0, 0, targetW, targetH);
-        const blob = await blobToWebp(canvas, 0.68);
+        const blob = await blobToJpeg(canvas, 0.68);
         URL.revokeObjectURL(objectUrl);
         if (!blob) {
           reject(new Error('Thumb encode failed'));
@@ -353,7 +353,7 @@ export default function PublishEdition() {
     const fullPut = await fetch(data.full.putUrl, {
       method: 'PUT',
       body: fullBlob,
-      headers: { 'Content-Type': 'image/webp' },
+      headers: { 'Content-Type': 'image/jpeg' },
     });
     if (!fullPut.ok) {
       throw new Error(`Full image upload failed (${fullPut.status})`);
@@ -361,7 +361,7 @@ export default function PublishEdition() {
     const thumbPut = await fetch(data.thumb.putUrl, {
       method: 'PUT',
       body: thumbBlob,
-      headers: { 'Content-Type': 'image/webp' },
+      headers: { 'Content-Type': 'image/jpeg' },
     });
     if (!thumbPut.ok) {
       throw new Error(`Thumbnail upload failed (${thumbPut.status})`);
@@ -535,8 +535,8 @@ export default function PublishEdition() {
             setPdfProgress(Math.round(((pageNum - 1) / numPages) * 100));
             const page = await pdf.getPage(pageNum);
             
-            // Render at 2.0x scale for crisp reading layout on devices
-            const viewport = page.getViewport({ scale: 2.0 });
+            // Render at 3.0x scale for crisp, high-resolution reading layout on devices
+            const viewport = page.getViewport({ scale: 3.0 });
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             if (!context) continue;
@@ -549,19 +549,20 @@ export default function PublishEdition() {
               viewport: viewport,
             }).promise;
 
+            // JPEG quality 1.0 = zero compression, original PDF quality preserved
             const blob = await new Promise<Blob | null>((res) => {
-              canvas.toBlob((b) => res(b), 'image/webp', 0.85);
+              canvas.toBlob((b) => res(b), 'image/jpeg', 1.0);
             });
 
             if (blob) {
               const cleanFileName = file.name.replace(/\.pdf$/i, '');
-              const imageFile = new File([blob], `${cleanFileName}_page_${pageNum}.webp`, {
-                type: 'image/webp',
+              const imageFile = new File([blob], `${cleanFileName}_page_${pageNum}.jpg`, {
+                type: 'image/jpeg',
               });
               renderedFiles.push(imageFile);
 
               // Generate preview data URL
-              const thumbUrl = canvas.toDataURL('image/webp', 0.15);
+              const thumbUrl = canvas.toDataURL('image/jpeg', 0.15);
               renderedPreviews.push(thumbUrl);
             }
           }
@@ -637,7 +638,7 @@ export default function PublishEdition() {
 
         for (let i = 0; i < files.length; i++) {
           const original = files[i];
-          const thumbBlob = await compressThumbWebp(original);
+          const thumbBlob = await compressThumbJpeg(original);
 
           let pageMeta: (typeof uploadedPages)[0];
           try {
@@ -645,8 +646,8 @@ export default function PublishEdition() {
           } catch (presignErr) {
             console.warn(`Presigned upload failed for page ${i + 1}, using fallback:`, presignErr);
             // Compress to fit under Vercel's ~4.5MB body limit
-            const compressedBlob = await compressFullWebpForUpload(original);
-            const compressedFile = new File([compressedBlob], original.name, { type: 'image/webp' });
+            const compressedBlob = await compressFallbackJpeg(original);
+            const compressedFile = new File([compressedBlob], original.name, { type: 'image/jpeg' });
             pageMeta = await uploadEditionPageViaApi(folderName, i + 1, compressedFile);
           }
           uploadedPages.push(pageMeta);
@@ -904,7 +905,7 @@ export default function PublishEdition() {
                 </p>
                 {formData.uploadType === 'pdf' && (
                   <p className="text-gray-500 text-xs mb-6 max-w-md text-center">
-                    Each PDF page is converted to webp images directly in your browser, uploaded to cloud storage via secure URLs, then saved with your
+                    Each PDF page is converted to JPG images directly in your browser, uploaded to cloud storage via secure URLs, then saved with your
                     chosen status (Live / Scheduled / Draft).
                   </p>
                 )}

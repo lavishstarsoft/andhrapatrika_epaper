@@ -16,23 +16,25 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Edition page mode: upload full + thumbnail webp, return both URLs.
+    // Edition page mode: upload full + thumbnail jpeg, return both URLs.
     if (kind === 'edition') {
       const folderName = (formData.get('folderName') as string) || 'untitled';
       const pageNumRaw = (formData.get('pageNum') as string) || '1';
       const pageNum = Math.max(1, Number.parseInt(pageNumRaw, 10) || 1);
 
       const pageBaseName = `page_${pageNum}`;
-      const filename = `${pageBaseName}.webp`;
-      const previewFilename = `${pageBaseName}_thumb.webp`;
+      const filename = `${pageBaseName}.jpg`;
+      const previewFilename = `${pageBaseName}_thumb.jpg`;
       const key = `editions/${folderName}/${filename}`;
       const previewKey = `editions/${folderName}/${previewFilename}`;
 
-      const webpBuffer = await sharp(buffer)
+      // Full image: JPEG quality 100 — zero compression, original quality preserved
+      const jpgBuffer = await sharp(buffer)
         .rotate()
-        .webp({ quality: 82, effort: 4 })
+        .jpeg({ quality: 100, chromaSubsampling: '4:4:4' })
         .toBuffer();
 
+      // Thumbnail: smaller size for fast preview loading
       const previewBuffer = await sharp(buffer)
         .rotate()
         .resize({
@@ -41,12 +43,12 @@ export async function POST(request: NextRequest) {
           fit: 'inside',
           withoutEnlargement: true,
         })
-        .webp({ quality: 68, effort: 4 })
+        .jpeg({ quality: 72 })
         .toBuffer();
 
       const [url, previewUrl] = await Promise.all([
-        uploadToR2(webpBuffer, key, 'image/webp'),
-        uploadToR2(previewBuffer, previewKey, 'image/webp'),
+        uploadToR2(jpgBuffer, key, 'image/jpeg'),
+        uploadToR2(previewBuffer, previewKey, 'image/jpeg'),
       ]);
 
       return NextResponse.json({

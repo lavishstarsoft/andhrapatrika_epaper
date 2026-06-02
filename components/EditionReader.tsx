@@ -952,7 +952,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                     alt={`Page ${currentPage + 1}`}
                     fill
                     className="object-contain object-[center_95%]"
-                    sizes="100vw"
+                    unoptimized
                     priority
                     referrerPolicy="no-referrer"
                     onLoad={(e) => {
@@ -981,7 +981,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                 alt="Main Page View"
                 fill
                 className="object-contain"
-                sizes="100vw"
+                unoptimized
                 priority
                 referrerPolicy="no-referrer"
                 onLoad={(e) => {
@@ -1245,7 +1245,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                     fill
                     className="object-contain"
                     referrerPolicy="no-referrer"
-                    sizes="(max-width: 1024px) 100vw, (max-width: 1280px) 800px, 1200px"
+                    unoptimized
                     priority
                     onLoad={(e) => {
                       const active = pages[currentPage];
@@ -1686,7 +1686,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                     className="absolute bottom-24 right-6 w-32 md:w-40 aspect-[2/3] bg-black/80 border border-white/20 rounded-lg overflow-hidden hidden md:block z-50 shadow-2xl backdrop-blur-sm"
                   >
                     <div className="relative w-full h-full opacity-50">
-                      <Image src={getCurrentPageProxyUrl()} alt="Mini" fill className="object-cover" />
+                      <Image src={getCurrentPageProxyUrl()} alt="Mini" fill className="object-cover" unoptimized />
                     </div>
                     {/* Viewport Indicator */}
                     <div

@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
         width: finalWidth,
         height: finalHeight,
       })
-      .png({ quality: 90, compressionLevel: 6 })
+      .png({ quality: 100, compressionLevel: 0 })
       .toBuffer();
 
     const logoPath = path.join(process.cwd(), 'public', 'ys-logo.jpeg');
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
     const resizedLogoBuffer = await sharp(logoBuffer)
       .resize({ width: logoTargetWidth })
       .flatten({ background: '#ffffff' })
-      .png()
+      .png({ quality: 100, compressionLevel: 0 })
       .toBuffer();
 
     const resizedLogoMeta = await sharp(resizedLogoBuffer).metadata();
@@ -211,7 +211,7 @@ export async function GET(request: NextRequest) {
           left: 0,
         },
       ])
-      .png({ quality: 85, compressionLevel: 5 })
+      .png({ quality: 100, compressionLevel: 0 })
       .toBuffer();
 
     const isInline = searchParams.get('inline') === 'true';

@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         width: finalWidth,
         height: finalHeight
       })
-      .png({ quality: 90, compressionLevel: 6 })
+      .png({ quality: 100, compressionLevel: 0 })
       .toBuffer();
 
     const isInline = searchParams.get('inline') === 'true';

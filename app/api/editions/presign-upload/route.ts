@@ -8,15 +8,15 @@ export async function POST(request: NextRequest) {
     const pageNum = Math.max(1, Number.parseInt(String(body.pageNum || '1'), 10) || 1);
 
     const pageBaseName = `page_${pageNum}`;
-    const filename = `${pageBaseName}.webp`;
-    const previewFilename = `${pageBaseName}_thumb.webp`;
+    const filename = `${pageBaseName}.jpg`;
+    const previewFilename = `${pageBaseName}_thumb.jpg`;
     const fullKey = `editions/${folderName}/${filename}`;
     const thumbKey = `editions/${folderName}/${previewFilename}`;
 
     const publicBase = process.env.CLOUDFLARE_R2_PUBLIC_URL!;
     const [fullPutUrl, thumbPutUrl] = await Promise.all([
-      getPresignedPutUrl(fullKey, 'image/webp'),
-      getPresignedPutUrl(thumbKey, 'image/webp'),
+      getPresignedPutUrl(fullKey, 'image/jpeg'),
+      getPresignedPutUrl(thumbKey, 'image/jpeg'),
     ]);
 
     return NextResponse.json({

@@ -27,16 +27,18 @@ async function uploadEditionImageBuffers(
   pageNum: number
 ) {
   const pageBaseName = `page_${pageNum}`;
-  const filename = `${pageBaseName}.webp`;
-  const previewFilename = `${pageBaseName}_thumb.webp`;
+  const filename = `${pageBaseName}.jpg`;
+  const previewFilename = `${pageBaseName}_thumb.jpg`;
   const key = `editions/${folderName}/${filename}`;
   const previewKey = `editions/${folderName}/${previewFilename}`;
 
-  const webpBuffer = await sharp(rawImageBuffer)
+  // Full image: JPEG quality 100 — zero compression, original quality preserved
+  const jpgBuffer = await sharp(rawImageBuffer)
     .rotate()
-    .webp({ quality: 82, effort: 4 })
+    .jpeg({ quality: 100, chromaSubsampling: '4:4:4' })
     .toBuffer();
 
+  // Thumbnail: smaller size for fast preview loading
   const previewBuffer = await sharp(rawImageBuffer)
     .rotate()
     .resize({
@@ -45,12 +47,12 @@ async function uploadEditionImageBuffers(
       fit: 'inside',
       withoutEnlargement: true,
     })
-    .webp({ quality: 68, effort: 4 })
+    .jpeg({ quality: 72 })
     .toBuffer();
 
   const [url, previewUrl] = await Promise.all([
-    uploadToR2(webpBuffer, key, 'image/webp'),
-    uploadToR2(previewBuffer, previewKey, 'image/webp'),
+    uploadToR2(jpgBuffer, key, 'image/jpeg'),
+    uploadToR2(previewBuffer, previewKey, 'image/jpeg'),
   ]);
 
   return {
@@ -214,7 +216,7 @@ export async function POST(request: NextRequest) {
               );
             }
             console.log('Starting PDF to images conversion for:', file.name, 'size:', buffer.length);
-            const doc = await pdfToImages(buffer, { scale: 2.5 });
+            const doc = await pdfToImages(buffer, { scale: 3.0 });
             let pageCount = 0;
             for await (const pagePng of doc) {
               pageCount++;
