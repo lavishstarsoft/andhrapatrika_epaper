@@ -74,10 +74,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const protocol = headersList.get('x-forwarded-proto') || 'https';
   const baseUrl = `${protocol}://${host}`;
 
-  const firstPageThumbnail = edition.pages[0]?.previewUrl || edition.pages[0]?.url || '/logo.png';
-  const absoluteImageUrl = firstPageThumbnail.startsWith('http')
-    ? firstPageThumbnail
-    : `${baseUrl.replace(/\/$/, '')}${firstPageThumbnail}`;
+  const firstPageUrl = edition.pages[0]?.url;
+  let absoluteImageUrl = '/logo.png';
+  if (firstPageUrl) {
+    const cropApiUrl = `/api/crop?url=${encodeURIComponent(firstPageUrl)}&x=0&y=0&w=100&h=25&inline=true`;
+    absoluteImageUrl = cropApiUrl.startsWith('http')
+      ? cropApiUrl
+      : `${baseUrl.replace(/\/$/, '')}${cropApiUrl}`;
+  } else {
+    absoluteImageUrl = `${baseUrl.replace(/\/$/, '')}/logo.png`;
+  }
 
   const editionSlug = edition.alias || id;
   const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/edition/${editionSlug}`;
