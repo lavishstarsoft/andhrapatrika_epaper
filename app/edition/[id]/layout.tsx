@@ -35,9 +35,20 @@ export async function generateMetadata(
     const protocol = headersList.get('x-forwarded-proto') || 'https';
     const baseUrl = `${protocol}://${host}`;
 
+    const rawImageVersion = edition.updatedAt || edition.createdAt || edition.date;
+    const imageVersion = rawImageVersion ? new Date(rawImageVersion).getTime() : NaN;
+    const appendVersionParam = (url: string) => {
+      if (!Number.isFinite(imageVersion) || url.includes('v=')) return url;
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}v=${imageVersion}`;
+    };
+
     // OG image: first page URL from DB (e.g. Cloudflare R2 public URL). Must be https for WhatsApp/Facebook.
     const pageImage = edition.pages?.[0]?.url || '/logo.png';
-    const absoluteImageUrl = pageImage.startsWith('http') ? pageImage : `${baseUrl.replace(/\/$/, '')}${pageImage}`;
+    const versionedPageImage = appendVersionParam(pageImage);
+    const absoluteImageUrl = versionedPageImage.startsWith('http')
+      ? versionedPageImage
+      : `${baseUrl.replace(/\/$/, '')}${versionedPageImage}`;
     const editionSlug = typeof edition.alias === 'string' ? edition.alias : id;
     const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/edition/${editionSlug}`;
 

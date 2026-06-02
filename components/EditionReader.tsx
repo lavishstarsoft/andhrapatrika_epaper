@@ -27,6 +27,8 @@ interface Edition {
   name: string;
   alias: string;
   date: string;
+  createdAt?: string;
+  updatedAt?: string;
   pages: EditionPage[];
   pageCount: number;
 }
@@ -206,6 +208,26 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
       return '';
     }
     return edition.pages[currentPage]?.url || '';
+  };
+
+  const getEditionVersion = () => {
+    const raw = edition?.updatedAt || edition?.createdAt || edition?.date;
+    if (!raw) return '';
+    const timestamp = new Date(raw).getTime();
+    return Number.isFinite(timestamp) ? String(timestamp) : '';
+  };
+
+  const appendVersionParam = (url: string) => {
+    const version = getEditionVersion();
+    if (!version || url.includes('v=')) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}v=${version}`;
+  };
+
+  const getVersionedPageUrl = () => {
+    const raw = getCurrentPageUrl();
+    if (!raw) return '';
+    return appendVersionParam(raw);
   };
 
   // Proxy URL logic
@@ -730,7 +752,8 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
   const handleClipDownload = async (pageUrl: string, displayDate: string, pageNum: number) => {
     setIsDownloading(true);
     try {
-      const downloadUrl = `/api/clip-download?url=${encodeURIComponent(pageUrl)}&x=${crop.x}&y=${crop.y}&w=${crop.w}&h=${crop.h}&date=${encodeURIComponent(displayDate)}&page=${pageNum}&filename=${encodeURIComponent(`yellow-singam-clip-${currentClipId || 'clip'}.png`)}`;
+      const versionedPageUrl = appendVersionParam(pageUrl);
+      const downloadUrl = `/api/clip-download?url=${encodeURIComponent(versionedPageUrl)}&x=${crop.x}&y=${crop.y}&w=${crop.w}&h=${crop.h}&date=${encodeURIComponent(displayDate)}&page=${pageNum}&filename=${encodeURIComponent(`yellow-singam-clip-${currentClipId || 'clip'}.png`)}`;
       const response = await fetch(downloadUrl);
       if (!response.ok) throw new Error('Download failed');
 
@@ -752,7 +775,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
   };
   const handleShareClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const currentPageUrl = getCurrentPageUrl();
+    const currentPageUrl = getVersionedPageUrl();
     if (!currentPageUrl) return;
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://andhrapatrikaa.com';
     const clipId = `C-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -1450,7 +1473,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                 </button>
                 <button
                   onClick={() => {
-                    const pageUrl = getCurrentPageUrl();
+                    const pageUrl = getVersionedPageUrl();
                     if (!pageUrl) return;
                     const displayDate = formatDate(edition?.date);
                     const pageNum = currentPage + 1;
@@ -1497,10 +1520,10 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
 
                   {/* Image Area */}
                   <div className="relative bg-white flex items-center justify-center min-h-[260px]">
-                    {getCurrentPageUrl() ? (
+                    {getVersionedPageUrl() ? (
                       <>
                         <img
-                          src={`/api/crop?url=${encodeURIComponent(getCurrentPageUrl())}&x=${crop.x}&y=${crop.y}&w=${crop.w}&h=${crop.h}&inline=true`}
+                          src={`/api/crop?url=${encodeURIComponent(getVersionedPageUrl())}&x=${crop.x}&y=${crop.y}&w=${crop.w}&h=${crop.h}&inline=true`}
                           alt="Cropped Preview"
                           className="block max-w-full h-auto object-contain"
                           onLoad={() => setClipPreviewLoading(false)}

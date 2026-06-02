@@ -17,6 +17,8 @@ interface Edition {
   name: string;
   alias: string;
   date: string;
+  createdAt?: string;
+  updatedAt?: string;
   pages: EditionPage[];
   pageCount: number;
 }
@@ -74,16 +76,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const protocol = headersList.get('x-forwarded-proto') || 'https';
   const baseUrl = `${protocol}://${host}`;
 
+  const rawImageVersion = edition.updatedAt || edition.createdAt || edition.date;
+  const imageVersion = rawImageVersion ? new Date(rawImageVersion).getTime() : NaN;
+  const appendVersionParam = (url: string) => {
+    if (!Number.isFinite(imageVersion) || url.includes('v=')) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}v=${imageVersion}`;
+  };
+
   const firstPageUrl = edition.pages[0]?.url;
-  let absoluteImageUrl = '/logo.png';
-  if (firstPageUrl) {
-    const cropApiUrl = `/api/crop?url=${encodeURIComponent(firstPageUrl)}&x=0&y=0&w=100&h=25&inline=true`;
-    absoluteImageUrl = cropApiUrl.startsWith('http')
-      ? cropApiUrl
-      : `${baseUrl.replace(/\/$/, '')}${cropApiUrl}`;
-  } else {
-    absoluteImageUrl = `${baseUrl.replace(/\/$/, '')}/logo.png`;
-  }
+  const cropSourceUrl = firstPageUrl ? appendVersionParam(firstPageUrl) : '/logo.png';
+  const cropApiUrl = `/api/crop?url=${encodeURIComponent(cropSourceUrl)}&x=0&y=0&w=100&h=25&inline=true`;
+  const absoluteImageUrl = cropApiUrl.startsWith('http')
+    ? cropApiUrl
+    : `${baseUrl.replace(/\/$/, '')}${cropApiUrl}`;
 
   const editionSlug = edition.alias || id;
   const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/edition/${editionSlug}`;
