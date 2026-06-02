@@ -51,24 +51,32 @@ export async function GET(request: NextRequest) {
     const finalWidth = finalRight - finalX;
     const finalHeight = finalBottom - finalY;
 
-    // Crop the image
-    const croppedBuffer = await image
-      .extract({
-        left: finalX,
-        top: finalY,
-        width: finalWidth,
-        height: finalHeight
-      })
-      .png({ quality: 100, compressionLevel: 0 })
-      .toBuffer();
-
+    const isOgSocial = searchParams.get('og') === 'main25';
     const isInline = searchParams.get('inline') === 'true';
+
+    let outputPipeline = image.extract({
+      left: finalX,
+      top: finalY,
+      width: finalWidth,
+      height: finalHeight,
+    });
+
+    // Social OG: resize + JPEG so WhatsApp/Facebook accept (< ~300KB target).
+    if (isOgSocial) {
+      outputPipeline = outputPipeline
+        .resize({ width: 1200, withoutEnlargement: true })
+        .jpeg({ quality: 82, mozjpeg: true });
+    } else {
+      outputPipeline = outputPipeline.png({ quality: 100, compressionLevel: 0 });
+    }
+
+    const croppedBuffer = await outputPipeline.toBuffer();
+    const contentType = isOgSocial ? 'image/jpeg' : 'image/png';
     const contentDisposition = isInline ? 'inline' : `attachment; filename="${filename}"`;
 
-    // Return the cropped image with dynamic headers based on usage
     return new NextResponse(croppedBuffer as any, {
       headers: {
-        'Content-Type': 'image/png',
+        'Content-Type': contentType,
         'Content-Disposition': contentDisposition,
         'Cache-Control': 'public, max-age=3600',
         'Content-Length': croppedBuffer.length.toString(),

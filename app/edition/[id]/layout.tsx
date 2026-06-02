@@ -43,12 +43,17 @@ export async function generateMetadata(
       return `${url}${separator}v=${imageVersion}`;
     };
 
-    // OG image: first page URL from DB (e.g. Cloudflare R2 public URL). Must be https for WhatsApp/Facebook.
+    // OG image: main editions use top 25% crop via /api/crop (WhatsApp-friendly size).
     const pageImage = edition.pages?.[0]?.url || '/logo.png';
     const versionedPageImage = appendVersionParam(pageImage);
-    const absoluteImageUrl = versionedPageImage.startsWith('http')
-      ? versionedPageImage
-      : `${baseUrl.replace(/\/$/, '')}${versionedPageImage}`;
+    const mainEditionKey = `${id} ${edition.alias || ''} ${edition.name || ''}`;
+    const isMainEdition = /main-edition|main edition/i.test(mainEditionKey);
+    const ogImagePath = isMainEdition
+      ? `/api/crop?url=${encodeURIComponent(versionedPageImage)}&x=0&y=0&w=100&h=25&inline=true&og=main25`
+      : versionedPageImage;
+    const absoluteImageUrl = ogImagePath.startsWith('http')
+      ? ogImagePath
+      : `${baseUrl.replace(/\/$/, '')}${ogImagePath}`;
     const editionSlug = typeof edition.alias === 'string' ? edition.alias : id;
     const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/edition/${editionSlug}`;
 
@@ -67,8 +72,8 @@ export async function generateMetadata(
         images: [
           {
             url: absoluteImageUrl,
-            width: 800,
-            height: 1200,
+            width: isMainEdition ? 1200 : 800,
+            height: isMainEdition ? 630 : 1200,
             alt: `${edition.name} Front Page`,
           },
         ],

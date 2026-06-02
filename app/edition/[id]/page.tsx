@@ -113,7 +113,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         {
           url: absoluteImageUrl,
           width: isMainEdition ? 1200 : 800,
-          height: isMainEdition ? 300 : 1200,
+          height: isMainEdition ? 630 : 1200,
           alt: edition.name,
         },
       ],
