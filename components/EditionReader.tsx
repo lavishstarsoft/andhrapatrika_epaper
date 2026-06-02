@@ -277,6 +277,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
   useEffect(() => {
     if (isZoomOpen) {
       document.body.style.overflow = 'hidden';
+      setImageTransform({ scale: 1, x: 0, y: 0 });
     } else {
       document.body.style.overflow = '';
     }
@@ -284,6 +285,12 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
       document.body.style.overflow = '';
     };
   }, [isZoomOpen]);
+
+  useEffect(() => {
+    if (isZoomOpen) {
+      setImageTransform({ scale: 1, x: 0, y: 0 });
+    }
+  }, [currentPage, isZoomOpen]);
 
   // Keep viewport fixed while adjusting crop on mobile.
   useEffect(() => {
@@ -514,39 +521,103 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
     setIsDragging(false);
   };
 
-  // Zoom Logic
+  // Mobile pinch-zoom (Android Gallery style)
+  const MOBILE_ZOOM_MIN = 1;
+  const MOBILE_ZOOM_MAX = 8;
+  const MOBILE_DOUBLE_TAP_SCALE = 2;
+
   const getDistance = (touch1: { x: number; y: number }, touch2: { x: number; y: number }) => {
-    return Math.sqrt(Math.pow(touch2.x - touch1.x, 2) + Math.pow(touch2.y - touch1.y, 2));
+    return Math.hypot(touch2.x - touch1.x, touch2.y - touch1.y);
   };
+
+  const getMobileZoomPanBounds = (container: HTMLDivElement, scale: number) => {
+    const rect = container.getBoundingClientRect();
+    const elementWidth = rect.width;
+    const elementHeight = rect.width * (3 / 2); // aspect-[2/3]
+    const scaledW = elementWidth * scale;
+    const scaledH = elementHeight * scale;
+    return {
+      maxX: Math.max(0, (scaledW - rect.width) / 2),
+      maxY: Math.max(0, (scaledH - rect.height) / 2),
+    };
+  };
+
+  const clampMobileTransform = (
+    transform: { scale: number; x: number; y: number },
+    container: HTMLDivElement | null
+  ) => {
+    if (!container || transform.scale <= MOBILE_ZOOM_MIN + 0.01) {
+      return { scale: MOBILE_ZOOM_MIN, x: 0, y: 0 };
+    }
+    const { maxX, maxY } = getMobileZoomPanBounds(container, transform.scale);
+    return {
+      scale: transform.scale,
+      x: Math.max(-maxX, Math.min(maxX, transform.x)),
+      y: Math.max(-maxY, Math.min(maxY, transform.y)),
+    };
+  };
+
+  const applyFocalZoom = (
+    prev: { scale: number; x: number; y: number },
+    targetScale: number,
+    focalX: number,
+    focalY: number,
+    container: HTMLDivElement
+  ) => {
+    const nextScale = Math.min(MOBILE_ZOOM_MAX, Math.max(MOBILE_ZOOM_MIN, targetScale));
+    if (nextScale <= MOBILE_ZOOM_MIN + 0.01) {
+      return { scale: MOBILE_ZOOM_MIN, x: 0, y: 0 };
+    }
+    const ratio = nextScale / Math.max(prev.scale, MOBILE_ZOOM_MIN);
+    const x = focalX - (focalX - prev.x) * ratio;
+    const y = focalY - (focalY - prev.y) * ratio;
+    return clampMobileTransform({ scale: nextScale, x, y }, container);
+  };
+
+  const getTouchFocalPoint = (containerRect: DOMRect, touch: { x: number; y: number }) => ({
+    focalX: touch.x - containerRect.left - containerRect.width / 2,
+    focalY: touch.y - containerRect.top - containerRect.height / 2,
+  });
+
+  const getPinchFocalPoint = (containerRect: DOMRect, touches: { x: number; y: number }[]) => ({
+    focalX: ((touches[0].x + touches[1].x) / 2) - containerRect.left - containerRect.width / 2,
+    focalY: ((touches[0].y + touches[1].y) / 2) - containerRect.top - containerRect.height / 2,
+  });
 
   const handleZoomTouchStart = (e: React.TouchEvent) => {
     if (isCropOpen) return;
-    const touches = Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY }));
+    const touches = Array.from(e.touches).map((t) => ({ x: t.clientX, y: t.clientY }));
     touchStartRef.current = {
       touches,
       scale: imageTransform.scale,
       x: imageTransform.x,
-      y: imageTransform.y
+      y: imageTransform.y,
     };
+
     if (touches.length === 2) {
       lastDistanceRef.current = getDistance(touches[0], touches[1]);
+      return;
     }
+
     if (touches.length === 1) {
       const now = Date.now();
       if (now - lastTapRef.current < 300) {
-        if (imageTransform.scale > 1) {
-          setImageTransform({ scale: 1, x: 0, y: 0 });
-        } else {
-          const rect = mobileZoomRef.current?.getBoundingClientRect();
-          if (rect) {
-            const centerX = touches[0].x - rect.left - rect.width / 2;
-            const centerY = touches[0].y - rect.top - rect.height / 2;
-            const scale = 5.0;
-            const maxX = (rect.width * (scale - 1)) / 2;
-            const maxY = (rect.height * (scale - 1)) / 2;
-            const targetX = Math.max(-maxX, Math.min(maxX, -centerX * (scale - 1)));
-            const targetY = Math.max(-maxY, Math.min(maxY, -centerY * (scale - 1)));
-            setImageTransform({ scale, x: targetX, y: targetY });
+        const container = mobileZoomRef.current;
+        if (container) {
+          const rect = container.getBoundingClientRect();
+          const { focalX, focalY } = getTouchFocalPoint(rect, touches[0]);
+          if (imageTransform.scale > MOBILE_ZOOM_MIN + 0.01) {
+            setImageTransform({ scale: MOBILE_ZOOM_MIN, x: 0, y: 0 });
+          } else {
+            setImageTransform(
+              applyFocalZoom(
+                { scale: MOBILE_ZOOM_MIN, x: 0, y: 0 },
+                MOBILE_DOUBLE_TAP_SCALE,
+                focalX,
+                focalY,
+                container
+              )
+            );
           }
         }
         lastTapRef.current = 0;
@@ -558,46 +629,52 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
 
   const handleZoomTouchMove = (e: React.TouchEvent) => {
     if (isCropOpen) return;
-    if (!touchStartRef.current || !mobileZoomRef.current) return;
-    const touches = Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY }));
-    const startData = touchStartRef.current;
-    const container = mobileZoomRef.current.getBoundingClientRect();
+    e.preventDefault();
+    const containerEl = mobileZoomRef.current;
+    if (!touchStartRef.current || !containerEl) return;
 
-    if (touches.length === 2 && startData.touches.length >= 2) {
+    const touches = Array.from(e.touches).map((t) => ({ x: t.clientX, y: t.clientY }));
+    const startData = touchStartRef.current;
+    const containerRect = containerEl.getBoundingClientRect();
+
+    if (touches.length === 2) {
       const currentDistance = getDistance(touches[0], touches[1]);
-      const scaleDiff = currentDistance / lastDistanceRef.current;
-      const newScale = Math.min(8, Math.max(1, startData.scale * scaleDiff));
-      const centerX = (touches[0].x + touches[1].x) / 2;
-      const centerY = (touches[0].y + touches[1].y) / 2;
-      const startCenterX = (startData.touches[0].x + startData.touches[1].x) / 2;
-      const startCenterY = (startData.touches[0].y + startData.touches[1].y) / 2;
-      let newX = startData.x + (centerX - startCenterX);
-      let newY = startData.y + (centerY - startCenterY);
-      const maxX = (container.width * (newScale - 1)) / 2;
-      const maxY = (container.height * (newScale - 1)) / 2;
-      newX = Math.max(-maxX, Math.min(maxX, newX));
-      newY = Math.max(-maxY, Math.min(maxY, newY));
-      setImageTransform({ scale: newScale, x: newX, y: newY });
-    } else if (touches.length === 1 && imageTransform.scale > 1) {
+      if (!lastDistanceRef.current) {
+        lastDistanceRef.current = currentDistance;
+        return;
+      }
+      const scaleFactor = currentDistance / lastDistanceRef.current;
+      lastDistanceRef.current = currentDistance;
+      const { focalX, focalY } = getPinchFocalPoint(containerRect, touches);
+
+      setImageTransform((prev) =>
+        applyFocalZoom(prev, prev.scale * scaleFactor, focalX, focalY, containerEl)
+      );
+      return;
+    }
+
+    // Pan only with one finger and only when zoomed in.
+    if (
+      touches.length === 1 &&
+      startData.touches.length === 1 &&
+      startData.scale > MOBILE_ZOOM_MIN + 0.01
+    ) {
       const dx = touches[0].x - startData.touches[0].x;
       const dy = touches[0].y - startData.touches[0].y;
-      let newX = startData.x + dx;
-      let newY = startData.y + dy;
-      const maxX = (container.width * (imageTransform.scale - 1)) / 2;
-      const maxY = (container.height * (imageTransform.scale - 1)) / 2;
-      newX = Math.max(-maxX, Math.min(maxX, newX));
-      newY = Math.max(-maxY, Math.min(maxY, newY));
-      setImageTransform(prev => ({ ...prev, x: newX, y: newY }));
+      setImageTransform(
+        clampMobileTransform(
+          { scale: startData.scale, x: startData.x + dx, y: startData.y + dy },
+          containerEl
+        )
+      );
     }
   };
 
   const handleZoomTouchEnd = () => {
-    if (imageTransform.scale < 1) {
-      setImageTransform({ scale: 1, x: 0, y: 0 });
-    }
-    if (imageTransform.scale > 0.95 && imageTransform.scale < 1.05) {
-      setImageTransform({ scale: 1, x: 0, y: 0 });
-    }
+    touchStartRef.current = null;
+    lastDistanceRef.current = 0;
+    const containerEl = mobileZoomRef.current;
+    setImageTransform((prev) => clampMobileTransform(prev, containerEl));
   };
 
   const pageVariants = {
@@ -1799,16 +1876,17 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
               {/* Mobile Zoom Interactive Area */}
               <div
                 ref={mobileZoomRef}
-                className="md:hidden w-full h-full relative overflow-hidden"
+                className="md:hidden w-full h-full relative overflow-hidden touch-none select-none"
+                style={{ touchAction: 'none', overscrollBehavior: 'none' }}
                 onTouchStart={handleZoomTouchStart}
                 onTouchMove={isCropOpen ? handleTouchMove : handleZoomTouchMove}
                 onTouchEnd={isCropOpen ? handleTouchEnd : handleZoomTouchEnd}
               >
                 <div
-                  className="relative w-full aspect-[2/3] mx-auto transition-transform duration-0 will-change-transform"
+                  className="relative w-full aspect-[2/3] mx-auto will-change-transform"
                   style={{
                     transform: `translate3d(${imageTransform.x}px, ${imageTransform.y}px, 0) scale(${imageTransform.scale})`,
-                    transformOrigin: 'center center'
+                    transformOrigin: 'center center',
                   }}
                 >
                   <Image
