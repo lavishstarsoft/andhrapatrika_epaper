@@ -1612,6 +1612,17 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
 
               <div className="flex items-center gap-2">
                 <button
+                  onClick={() => {
+                    setIsZoomOpen(false);
+                    setIsCropOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-700 active:scale-95 transition-all shadow-md"
+                  title="Crop Page"
+                >
+                  <Crop size={14} />
+                  <span>Crop</span>
+                </button>
+                <button
                   onClick={() => setIsMiniMapMinimized(!isMiniMapMinimized)}
                   className={`p-2 rounded-full transition-colors ${isMiniMapMinimized ? 'text-white/40' : 'text-[#1721d8] bg-[#1721d8]/10'}`}
                   title="Toggle Mini-map"
