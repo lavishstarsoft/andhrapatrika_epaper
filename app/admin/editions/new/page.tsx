@@ -535,6 +535,9 @@ export default function PublishEdition() {
             setPdfProgress(Math.round(((pageNum - 1) / numPages) * 100));
             const page = await pdf.getPage(pageNum);
             
+            // Force loading of embedded fonts/resources before rendering to avoid fallback fonts (which look bold)
+            await page.getOperatorList();
+
             // Render at 5.0x scale for crisp, high-resolution reading layout on devices (matches PDF clarity)
             const viewport = page.getViewport({ scale: 5.0 });
             const canvas = document.createElement('canvas');
@@ -543,6 +546,10 @@ export default function PublishEdition() {
 
             canvas.width = viewport.width;
             canvas.height = viewport.height;
+
+            // Fill canvas with solid white background to prevent transparent anti-aliasing edges from appearing bold/thick
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, canvas.width, canvas.height);
 
             await page.render({
               canvasContext: context,
