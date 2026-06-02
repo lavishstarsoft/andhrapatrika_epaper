@@ -62,7 +62,7 @@ export default async function ClipPage({ params, searchParams }: any) {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10 px-4">
       {/* Branded Clip Card */}
-      <div className="bg-white border border-black/15 shadow-2xl max-w-2xl w-full flex flex-col overflow-hidden animate-in fade-in zoom-in duration-500">
+      <div className="bg-white border-[1px] border-gray-300 shadow-2xl max-w-2xl w-full flex flex-col overflow-hidden animate-in fade-in zoom-in duration-500">
 
         {/* Cropped Image Area */}
         <div className="bg-white flex flex-col">
