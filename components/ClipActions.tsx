@@ -8,9 +8,10 @@ interface ClipActionsProps {
   shareUrl: string;
   downloadUrl: string;
   readUrl: string;
+  disabled?: boolean;
 }
 
-export default function ClipActions({ shareUrl, downloadUrl, readUrl }: ClipActionsProps) {
+export default function ClipActions({ shareUrl, downloadUrl, readUrl, disabled = false }: ClipActionsProps) {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const copyLink = async () => {
@@ -60,64 +61,72 @@ export default function ClipActions({ shareUrl, downloadUrl, readUrl }: ClipActi
               open(shareUrl);
             }
           }}
-          className="bg-[#0088ff] text-white p-3 rounded-sm hover:bg-blue-600 transition-colors"
+          disabled={disabled}
+          className="bg-[#0088ff] text-white p-3 rounded-sm hover:bg-blue-600 transition-colors disabled:opacity-40 disabled:pointer-events-none"
           title="Share"
         >
           <Share2 size={22} />
         </button>
         <button
           onClick={copyLink}
-          className="bg-[#0088ff] text-white p-3 rounded-sm hover:bg-blue-600 transition-colors"
+          disabled={disabled}
+          className="bg-[#0088ff] text-white p-3 rounded-sm hover:bg-blue-600 transition-colors disabled:opacity-40 disabled:pointer-events-none"
           title="Copy Link"
         >
           <Copy size={22} />
         </button>
         <button
           onClick={() => open(shareUrl)}
-          className="bg-[#0088ff] text-white p-3 rounded-sm hover:bg-blue-600 transition-colors"
+          disabled={disabled}
+          className="bg-[#0088ff] text-white p-3 rounded-sm hover:bg-blue-600 transition-colors disabled:opacity-40 disabled:pointer-events-none"
           title="Open Link"
         >
           <ExternalLink size={22} />
         </button>
         <button
           onClick={() => open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`)}
-          className="bg-[#1877F2] text-white p-3 rounded-sm hover:bg-blue-700 transition-colors"
+          disabled={disabled}
+          className="bg-[#1877F2] text-white p-3 rounded-sm hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:pointer-events-none"
           title="Facebook"
         >
           <Facebook size={22} />
         </button>
         <button
           onClick={() => open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}`)}
-          className="bg-black text-white p-3 rounded-sm hover:bg-gray-800 transition-colors"
+          disabled={disabled}
+          className="bg-black text-white p-3 rounded-sm hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:pointer-events-none"
           title="X (Twitter)"
         >
           <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l16 16M4 20L20 4" /></svg>
         </button>
         <button
           onClick={() => open(`https://wa.me/?text=${encodeURIComponent(shareUrl)}`)}
-          className="bg-[#25D366] text-white p-3 rounded-sm hover:bg-green-600 transition-colors"
+          disabled={disabled}
+          className="bg-[#25D366] text-white p-3 rounded-sm hover:bg-green-600 transition-colors disabled:opacity-40 disabled:pointer-events-none"
           title="WhatsApp"
         >
           <WhatsAppIcon size={22} />
         </button>
         <button
           onClick={() => open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`)}
-          className="bg-[#0A66C2] text-white p-3 rounded-sm hover:bg-blue-800 transition-colors"
+          disabled={disabled}
+          className="bg-[#0A66C2] text-white p-3 rounded-sm hover:bg-blue-800 transition-colors disabled:opacity-40 disabled:pointer-events-none"
           title="LinkedIn"
         >
           <Linkedin size={22} />
         </button>
         <button
           onClick={() => open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}`)}
-          className="bg-[#229ED9] text-white p-3 rounded-sm hover:bg-blue-500 transition-colors"
+          disabled={disabled}
+          className="bg-[#229ED9] text-white p-3 rounded-sm hover:bg-blue-500 transition-colors disabled:opacity-40 disabled:pointer-events-none"
           title="Telegram"
         >
           <Send size={22} />
         </button>
         <button
           onClick={handleDownload}
-          disabled={isDownloading}
-          className="bg-[#1721d8] text-white p-3 rounded-sm hover:bg-[#121aa8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          disabled={disabled || isDownloading}
+          className="bg-[#1721d8] text-white p-3 rounded-sm hover:bg-[#121aa8] transition-colors disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center"
           title="Download Clip"
         >
           {isDownloading ? (

@@ -5,9 +5,10 @@ import { Loader2, X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 interface ClipImagePreviewProps {
   src: string;
+  onLoaded?: () => void;
 }
 
-export default function ClipImagePreview({ src }: ClipImagePreviewProps) {
+export default function ClipImagePreview({ src, onLoaded }: ClipImagePreviewProps) {
   const [loading, setLoading] = useState(true);
   const [isZoomed, setIsZoomed] = useState(false);
   const [scale, setScale] = useState(1);
@@ -22,8 +23,9 @@ export default function ClipImagePreview({ src }: ClipImagePreviewProps) {
   useEffect(() => {
     if (imgRef.current?.complete) {
       setLoading(false);
+      onLoaded?.();
     }
-  }, []);
+  }, [onLoaded]);
 
   const handleZoomIn = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -101,8 +103,14 @@ export default function ClipImagePreview({ src }: ClipImagePreviewProps) {
         src={src}
         alt="Shared Snippet"
         className="w-full h-auto object-contain border border-gray-100 cursor-zoom-in hover:opacity-95 transition-opacity"
-        onLoad={() => setLoading(false)}
-        onError={() => setLoading(false)}
+        onLoad={() => {
+          setLoading(false);
+          onLoaded?.();
+        }}
+        onError={() => {
+          setLoading(false);
+          onLoaded?.();
+        }}
         onClick={() => setIsZoomed(true)}
       />
 

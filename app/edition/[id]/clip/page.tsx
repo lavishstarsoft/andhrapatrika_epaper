@@ -1,7 +1,5 @@
 import { Metadata } from 'next';
-import Image from 'next/image';
-import ClipActions from '@/components/ClipActions';
-import ClipImagePreview from '@/components/ClipImagePreview';
+import ClipPageClient from '@/components/ClipPageClient';
 
 export async function generateMetadata({ params, searchParams }: any): Promise<Metadata> {
   const resolvedParams = await params;
@@ -60,34 +58,14 @@ export default async function ClipPage({ params, searchParams }: any) {
   const readUrl = `/edition/${id}?page=${page}&hx=${x}&hy=${y}&hw=${w}&hh=${h}`;
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10 px-4">
-      {/* Branded Clip Card */}
-      <div className="bg-white border-[3px] border-black shadow-2xl max-w-2xl w-full flex flex-col overflow-hidden animate-in fade-in zoom-in duration-500">
-
-        {/* Cropped Image Area */}
-        <div className="bg-white flex flex-col">
-          <ClipImagePreview src={cropImageUrl} />
-        </div>
-
-        {/* Branded Footer */}
-        <div className="bg-gray-50 p-4 text-center border-t border-black/10">
-          <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-[#2d2d2d] font-bold text-xs sm:text-sm uppercase tracking-tight">
-            <span>andhrapatrikaa.com</span>
-            <span className="hidden sm:inline opacity-30">|</span>
-            <span>{date}</span>
-            <span className="hidden sm:inline opacity-30">|</span>
-            <span>Page: {page}</span>
-            <span className="hidden sm:inline opacity-30">|</span>
-            <span>Clip ID: {cid}</span>
-          </div>
-          <p className="text-gray-500 text-[10px] sm:text-xs mt-1.5 font-medium leading-tight">
-            For more details, visit andhrapatrikaa.com
-          </p>
-        </div>
-      </div>
-
-      {/* Page Actions (Outside of branding area) */}
-      <ClipActions shareUrl={shareUrl} downloadUrl={downloadUrl} readUrl={readUrl} />
-    </div>
+    <ClipPageClient
+      cropImageUrl={cropImageUrl}
+      shareUrl={shareUrl}
+      downloadUrl={downloadUrl}
+      readUrl={readUrl}
+      date={date || ''}
+      page={page || ''}
+      cid={cid || ''}
+    />
   );
 }
