@@ -333,12 +333,7 @@ export default async function Home({
                         key={edition._id} 
                         className="group block bg-white rounded-xl md:rounded-sm overflow-hidden elevation-1 md:shadow-sm active:scale-[0.98] transition-all duration-150 touch-ripple relative"
                       >
-                        {isNew(edition.date) && (
-                          <div className="md:hidden absolute top-2 left-2 z-10 flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                            <Flame size={10} />
-                            NEW
-                          </div>
-                        )}
+
                         
                         <div className="relative aspect-[2/3] w-full overflow-hidden bg-gray-100" suppressHydrationWarning>
                           {edition.pages && edition.pages[0]?.url ? (
@@ -404,12 +399,7 @@ export default async function Home({
                         key={edition._id} 
                         className="group block bg-white rounded-xl md:rounded-sm overflow-hidden elevation-1 md:shadow-sm active:scale-[0.98] transition-all duration-150 touch-ripple relative"
                       >
-                        {isNew(edition.date) && (
-                          <div className="md:hidden absolute top-2 left-2 z-10 flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                            <Flame size={10} />
-                            NEW
-                          </div>
-                        )}
+
                         
                         <div className="relative aspect-[2/3] w-full overflow-hidden bg-gray-100" suppressHydrationWarning>
                           {edition.pages && edition.pages[0]?.url ? (
