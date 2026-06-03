@@ -33,12 +33,16 @@ export async function generateMetadata({ params, searchParams }: any): Promise<M
   // Create an absolute URL for the Open Graph image to point directly to the inline crop API
   const cropImageUrl = `${baseUrl}/api/clip-download?url=${encodeURIComponent(decodedUrl)}&x=${x}&y=${y}&w=${w}&h=${h}&date=${encodeURIComponent(displayDate)}&page=${page}&inline=true`;
 
+  const pageText = page ? ` Page ${page}` : '';
+  const dateText = displayDate ? ` - ${displayDate}` : '';
+  const descriptionText = `Andhrapatrika clip${dateText}${pageText}. Read the latest Telugu daily newspaper edition clipping, stay updated with Telugu news, local updates, and analysis.`.trim();
+
   return {
     title: decodedTitle || 'Andhrapatrika',
-    description: `Andhrapatrika clip - ${displayDate} Page ${page || ''}`.trim(),
+    description: descriptionText,
     openGraph: {
       title: decodedTitle || 'Andhrapatrika',
-      description: `Andhrapatrika clip - ${displayDate} Page ${page || ''}`.trim(),
+      description: descriptionText,
       url: `${baseUrl}/edition/${id}/clip?url=${encodeURIComponent(decodedUrl)}&x=${x}&y=${y}&w=${w}&h=${h}&title=${encodeURIComponent(decodedTitle)}&date=${encodeURIComponent(date || '')}&page=${page}&cid=${cid}`,
       siteName: 'Andhrapatrika',
       images: [
@@ -54,7 +58,7 @@ export async function generateMetadata({ params, searchParams }: any): Promise<M
     twitter: {
       card: 'summary_large_image',
       title: decodedTitle || 'Andhrapatrika',
-      description: `Andhrapatrika clip - ${displayDate} Page ${page || ''}`.trim(),
+      description: descriptionText,
       images: [cropImageUrl],
     },
   };

@@ -98,15 +98,17 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const editionSlug = edition.alias || id;
   const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/edition/${editionSlug}`;
 
+  const defaultDescription = `Read the Andhrapatrika Telugu Daily ePaper online. Edition: ${edition.name}. Stay updated with the latest Telugu news, local updates, and daily edition reports.`.trim();
+
   return {
     title: `${edition.name} - Andhrapatrika Telugu Daily ePaper`,
-    description: `Read the Andhrapatrika Telugu Daily ePaper online. Edition: ${edition.name}.`,
+    description: defaultDescription,
     alternates: {
       canonical: canonicalUrl,
     },
     openGraph: {
       title: `${edition.name} | Andhrapatrika ePaper`,
-      description: `Read today's edition of Andhrapatrika Telugu Daily.`,
+      description: defaultDescription,
       url: canonicalUrl,
       siteName: 'Andhrapatrika',
       images: [
@@ -122,7 +124,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     twitter: {
       card: 'summary_large_image',
       title: `${edition.name} | Andhrapatrika ePaper`,
-      description: `Read today's edition of Andhrapatrika Telugu Daily.`,
+      description: defaultDescription,
       images: [absoluteImageUrl],
     },
   };

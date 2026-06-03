@@ -199,7 +199,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const composed = await finalCanvas
+    let composed = await finalCanvas
       .composite([
         {
           input: resizedLogoBuffer,
@@ -217,15 +217,33 @@ export async function GET(request: NextRequest) {
           left: 0,
         },
       ])
-      .png({ quality: 100, compressionLevel: 0 })
+      .png({ compressionLevel: 6 })
       .toBuffer();
 
     const isInline = searchParams.get('inline') === 'true';
+    if (isInline) {
+      // For inline preview (like WhatsApp OG image or web display), resize to fit inside 1200x1200px
+      // and encode as highly compressed JPEG to keep file size small (< 300KB)
+      let sharpComposed = sharp(composed);
+      const composedMeta = await sharpComposed.metadata();
+      const compW = composedMeta.width || cropW;
+      const compH = composedMeta.height || (headerHeight + headerBottomGap + cropH);
+
+      if (compW > 1200 || compH > 1200) {
+        sharpComposed = sharpComposed.resize({
+          width: compW > compH ? 1200 : undefined,
+          height: compH >= compW ? 1200 : undefined,
+          fit: 'inside',
+        });
+      }
+      composed = await sharpComposed.jpeg({ quality: 80 }).toBuffer();
+    }
+
     const contentDisposition = isInline ? 'inline' : `attachment; filename="${filename}"`;
 
     return new NextResponse(composed as any, {
       headers: {
-        'Content-Type': 'image/png',
+        'Content-Type': isInline ? 'image/jpeg' : 'image/png',
         'Content-Disposition': contentDisposition,
         'Cache-Control': 'public, max-age=3600',
         'Content-Length': composed.length.toString(),
