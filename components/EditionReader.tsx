@@ -1612,6 +1612,8 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                   onClick={() => {
                     if (navigator.share) {
                       navigator.share({
+                        title: '',
+                        text: '',
                         url: generatedLink
                       }).catch(err => console.log('Share failed:', err));
                     }
