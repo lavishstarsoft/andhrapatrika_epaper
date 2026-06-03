@@ -145,7 +145,44 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
   const zoomImageContainerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ type: 'move' | 'resize', handle?: string, startX: number, startY: number, startCrop: typeof crop } | null>(null);
   const touchRef = useRef<{ type: 'move' | 'resize', handle?: string, startX: number, startY: number, startCrop: typeof crop, containerElement?: HTMLDivElement } | null>(null);
+  
+  const mobileButtonsRef = useRef<HTMLDivElement>(null);
 
+  // Dynamically position mobile Share/Cancel buttons to stick to the crop box without going off-screen
+  useEffect(() => {
+    if (!isCropOpen) return;
+    
+    let rafId: number;
+    const updateButtonsPosition = () => {
+      const cropBox = document.getElementById('mobile-crop-box');
+      const buttons = mobileButtonsRef.current;
+      if (cropBox && buttons) {
+         const rect = cropBox.getBoundingClientRect();
+         
+         // Base position: exactly at the bottom of the crop box, centered
+         let top = rect.bottom + 16;
+         let left = rect.left + rect.width / 2;
+         
+         // If placing below goes off screen, place above the crop box
+         if (top + 60 > window.innerHeight) {
+            top = rect.top - 60;
+         }
+         
+         // If placing above also goes off screen (crop box is taking up the whole screen), place inside at bottom
+         if (top < 80) {
+            top = Math.min(window.innerHeight - 80, rect.bottom - 60);
+         }
+         
+         buttons.style.top = `${top}px`;
+         buttons.style.left = `${left}px`;
+         buttons.style.transform = `translateX(-50%)`;
+      }
+      rafId = requestAnimationFrame(updateButtonsPosition);
+    };
+    
+    rafId = requestAnimationFrame(updateButtonsPosition);
+    return () => cancelAnimationFrame(rafId);
+  }, [isCropOpen]);
   // Sync if initialEdition changes (e.g. on navigation)
   useEffect(() => {
     setEdition(initialEdition);
@@ -785,9 +822,64 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
   };
 
   const handleCropToggle = () => {
-    // Do not alter zoom/pan/crop values while toggling crop mode.
-    // This keeps visual image position and selected crop area perfectly aligned.
-    setIsCropOpen((prev) => !prev);
+    setIsCropOpen((prev) => {
+      const willOpen = !prev;
+      if (willOpen) {
+        const isMobile = window.innerWidth < 768;
+        if (isMobile) {
+          const s = imageTransform.scale;
+          if (s > 1 && mobileContainerRef.current) {
+            const rect = mobileContainerRef.current.getBoundingClientRect();
+            const imgW = rect.width * s;
+            const imgH = (rect.width * 1.5) * s; // aspect 2/3
+            
+            const cx = imageTransform.x;
+            const cy = imageTransform.y;
+            
+            // Width is 50% of viewport, Height is 50% of viewport
+            const wPct = ((rect.width * 0.5) / imgW) * 100;
+            const hPct = ((rect.height * 0.5) / imgH) * 100;
+            
+            const centerX = ((imgW / 2 - cx) / imgW) * 100;
+            const centerY = ((imgH / 2 - cy) / imgH) * 100;
+            
+            const xPct = Math.max(0, Math.min(100 - wPct, centerX - wPct / 2));
+            const yPct = Math.max(0, Math.min(100 - hPct, centerY - hPct / 2));
+            
+            setCrop({ x: xPct, y: yPct, w: wPct, h: hPct });
+          } else {
+            setCrop({ x: 25, y: 25, w: 50, h: 50 });
+          }
+        } else {
+          const s = desktopZoomScale;
+          if (s > 1 && zoomContainerRef.current && zoomImageContainerRef.current) {
+            const container = zoomContainerRef.current;
+            const imgRect = zoomImageContainerRef.current.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            
+            const vW = containerRect.width;
+            const vH = containerRect.height;
+            
+            const wPct = ((vW * 0.5) / imgRect.width) * 100;
+            const hPct = ((vH * 0.5) / imgRect.height) * 100;
+            
+            const scrollX = container.scrollLeft;
+            const scrollY = container.scrollTop;
+            
+            const centerX = ((scrollX + vW / 2) / imgRect.width) * 100;
+            const centerY = ((scrollY + vH / 2) / imgRect.height) * 100;
+            
+            const xPct = Math.max(0, Math.min(100 - wPct, centerX - wPct / 2));
+            const yPct = Math.max(0, Math.min(100 - hPct, centerY - hPct / 2));
+            
+            setCrop({ x: xPct, y: yPct, w: wPct, h: hPct });
+          } else {
+            setCrop({ x: 25, y: 25, w: 50, h: 50 });
+          }
+        }
+      }
+      return willOpen;
+    });
   };
 
   const isAnyZoomActive =
@@ -1770,7 +1862,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                 <button
                   onClick={handleCropToggle}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition-all shadow-md ${
-                    isCropOpen ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
+                    isCropOpen ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-[#1721d8] hover:bg-[#121aa8] text-white shadow-[#1721d8]/30'
                   }`}
                   title={isCropOpen ? "Close Crop Tool" : "Crop Page"}
                 >
@@ -1821,7 +1913,7 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                     {isCropOpen && (
                       <div className="absolute inset-0 z-10 pointer-events-none">
                         <div
-                          className="absolute shadow-[0_0_0_9999px_rgba(0,0,0,0.6)] pointer-events-auto border-2 border-white cursor-move"
+                          className="absolute shadow-[0_0_0_9999px_rgba(0,0,0,0.7)] pointer-events-auto border-4 border-[#1721d8] cursor-move"
                           style={{
                             top: zoomCropLayout ? zoomCropLayout.cropTop : `${crop.y}%`,
                             left: zoomCropLayout ? zoomCropLayout.cropLeft : `${crop.x}%`,
@@ -1830,28 +1922,25 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                           }}
                           onPointerDown={(e) => handlePointerDown(e, 'move')}
                         >
-                          {/* Action buttons - Branded Labeled Style - Smart Positioning */}
+                          {/* Action buttons - Fixed at bottom center of screen so they never get lost */}
                           <div
-                            className="absolute left-0 right-0 flex justify-center gap-3 pointer-events-auto transition-all duration-300"
-                            style={{
-                              top: crop.y < 12 ? 'calc(100% + 15px)' : '-60px',
-                              zIndex: 50
-                            }}
+                            className="fixed bottom-10 left-1/2 -translate-x-1/2 flex justify-center gap-4 pointer-events-auto transition-all duration-300"
+                            style={{ zIndex: 110 }}
                           >
                             <button
                               onClick={handleShareClick}
                               onPointerDown={(e) => e.stopPropagation()}
-                              className="bg-[#007bff] text-white px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-[0_4px_20px_rgba(0,123,255,0.4)] hover:bg-[#0069d9] transition-all font-bold text-sm"
+                              className="bg-[#1721d8] text-white px-8 py-3 rounded-full flex items-center gap-2 shadow-[0_8px_30px_rgba(23,33,216,0.5)] hover:bg-[#121aa8] transition-all font-bold text-sm hover:scale-105 active:scale-95"
                             >
-                              <Share2 size={18} />
-                              <span>Share</span>
+                              <Share2 size={20} />
+                              <span>Share Clip</span>
                             </button>
                             <button
                               onClick={() => setIsCropOpen(false)}
                               onPointerDown={(e) => e.stopPropagation()}
-                              className="bg-[#1a1a1a] text-white px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-[0_4px_20px_rgba(0,0,0,0.4)] hover:bg-[#000000] transition-all font-bold text-sm border border-white/20"
+                              className="bg-black/80 backdrop-blur-md text-white px-8 py-3 rounded-full flex items-center gap-2 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:bg-black transition-all font-bold text-sm border border-white/20 hover:scale-105 active:scale-95"
                             >
-                              <X size={18} />
+                              <X size={20} />
                               <span>Cancel</span>
                             </button>
                           </div>
@@ -1930,12 +2019,16 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                         />
                       </div>
                       <div
-                        className={`absolute border-2 ${isDragging ? 'border-[#1721d8]' : 'border-white'} transition-colors`}
+                        id="mobile-crop-box"
+                        className={`absolute ${isDragging ? 'border-white' : 'border-[#1721d8]'} transition-colors`}
                         style={{
                           top: `${crop.y}%`,
                           left: `${crop.x}%`,
                           width: `${crop.w}%`,
                           height: `${crop.h}%`,
+                          borderStyle: 'solid',
+                          borderWidth: `${3 * mobileZoomCropControlScale}px`,
+                          boxShadow: `0 0 ${15 * mobileZoomCropControlScale}px rgba(23,33,216,0.5)`
                         }}
                       >
                         <div className="absolute inset-4 cursor-move" onTouchStart={(e) => handleTouchStart(e, 'move')} />
@@ -1946,18 +2039,6 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                           <div className="absolute top-2/3 left-0 right-0 h-[1px] bg-white/40" />
                           <div className="absolute left-1/3 top-0 bottom-0 w-[1px] bg-white/40" />
                           <div className="absolute left-2/3 top-0 bottom-0 w-[1px] bg-white/40" />
-                        </div>
-
-                        <div
-                          className="absolute left-0 right-0 flex justify-center gap-3 transition-all duration-300"
-                          style={{
-                            top: crop.y < 12 ? 'calc(100% + 12px)' : '-60px',
-                            transform: `scale(${mobileZoomCropControlScale})`,
-                            transformOrigin: 'center center',
-                          }}
-                        >
-                          <button onClick={handleShareClick} className="bg-[#007bff] text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-bold text-sm"><Share2 size={18} /> Share</button>
-                          <button onClick={() => setIsCropOpen(false)} className="bg-[#1a1a1a] text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-bold text-sm border border-white/20"><X size={18} /> Cancel</button>
                         </div>
 
                         {/* Corner Resize Handles */}
@@ -2067,60 +2148,82 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
               </AnimatePresence>
 
               {/* Bottom Navigation & Controls */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center gap-4 bg-gradient-to-t from-black/60 to-transparent pointer-events-none">
-                <div className="flex items-center gap-2 pointer-events-auto bg-black/40 backdrop-blur-md p-1 rounded-full border border-white/10">
-                  <button
-                    onClick={() => currentPage > 0 && setCurrentPage(currentPage - 1)}
-                    disabled={currentPage === 0}
-                    className="p-2.5 hover:bg-white/10 disabled:opacity-20 rounded-full text-white transition-all active:scale-90"
+              <AnimatePresence>
+                {!isCropOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center gap-4 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"
                   >
-                    <ChevronLeft size={22} />
-                  </button>
+                    <div className="flex items-center gap-2 pointer-events-auto bg-black/40 backdrop-blur-md p-1 rounded-full border border-white/10">
+                      <button
+                        onClick={() => currentPage > 0 && setCurrentPage(currentPage - 1)}
+                        disabled={currentPage === 0}
+                        className="p-2.5 hover:bg-white/10 disabled:opacity-20 rounded-full text-white transition-all active:scale-90"
+                      >
+                        <ChevronLeft size={22} />
+                      </button>
 
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={handleResetToNormalView}
-                      className={`p-2.5 transition-all ${isAnyZoomActive
-                        ? 'rounded-lg text-white bg-white/12 hover:bg-white/20'
-                        : 'rounded-full text-[#1721d8] bg-[#1721d8]/10'
-                        }`}
-                    >
-                      {isAnyZoomActive ? <Minimize2 size={18} /> : <Maximize size={18} />}
-                    </button>
-                    <div className="w-[1px] h-4 bg-white/20 mx-1" />
-                    <button
-                      onClick={handleZoomOut}
-                      className="p-2.5 text-white hover:bg-white/10 rounded-full flex items-center justify-center font-bold text-xl w-10 h-10"
-                      title="Zoom Out"
-                    >
-                      <span className="leading-none">−</span>
-                    </button>
-                    <button
-                      onClick={handleZoomIn}
-                      className="p-2.5 text-white hover:bg-white/10 rounded-full flex items-center justify-center font-bold text-xl w-10 h-10"
-                      title="Zoom In"
-                    >
-                      <span className="leading-none">+</span>
-                    </button>
-                  </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={handleResetToNormalView}
+                          className={`p-2.5 transition-all ${isAnyZoomActive
+                            ? 'rounded-lg text-white bg-white/12 hover:bg-white/20'
+                            : 'rounded-full text-[#1721d8] bg-[#1721d8]/10'
+                            }`}
+                        >
+                          {isAnyZoomActive ? <Minimize2 size={18} /> : <Maximize size={18} />}
+                        </button>
+                        <div className="w-[1px] h-4 bg-white/20 mx-1" />
+                        <button
+                          onClick={handleZoomOut}
+                          className="p-2.5 text-white hover:bg-white/10 rounded-full flex items-center justify-center font-bold text-xl w-10 h-10"
+                          title="Zoom Out"
+                        >
+                          <span className="leading-none">−</span>
+                        </button>
+                        <button
+                          onClick={handleZoomIn}
+                          className="p-2.5 text-white hover:bg-white/10 rounded-full flex items-center justify-center font-bold text-xl w-10 h-10"
+                          title="Zoom In"
+                        >
+                          <span className="leading-none">+</span>
+                        </button>
+                      </div>
 
-                  <button
-                    onClick={() => currentPage < totalPages - 1 && setCurrentPage(currentPage + 1)}
-                    disabled={currentPage === totalPages - 1}
-                    className="p-3 bg-white/10 hover:bg-white/20 disabled:opacity-20 rounded-full text-white backdrop-blur-md transition-all active:scale-90"
-                  >
-                    <ChevronRight size={24} />
-                  </button>
-                </div>
+                      <button
+                        onClick={() => currentPage < totalPages - 1 && setCurrentPage(currentPage + 1)}
+                        disabled={currentPage === totalPages - 1}
+                        className="p-3 bg-white/10 hover:bg-white/20 disabled:opacity-20 rounded-full text-white backdrop-blur-md transition-all active:scale-90"
+                      >
+                        <ChevronRight size={24} />
+                      </button>
+                    </div>
 
-                <div className="text-[10px] text-white/40 uppercase tracking-[0.3em] font-bold">
-                  Scroll or Click to zoom
-                </div>
-              </div>
+                    <div className="text-[10px] text-white/40 uppercase tracking-[0.3em] font-bold">
+                      Scroll or Click to zoom
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Dynamic Mobile Crop Buttons */}
+      {isCropOpen && (
+        <div
+          ref={mobileButtonsRef}
+          className="md:hidden fixed flex justify-center gap-4 pointer-events-auto"
+          style={{ zIndex: 110, top: '-999px', left: '-999px', transition: 'top 0.1s ease-out, left 0.1s ease-out' }}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
+          <button onClick={handleShareClick} className="bg-[#1721d8] text-white px-6 py-3 rounded-full flex items-center gap-2 shadow-[0_8px_30px_rgba(23,33,216,0.5)] font-bold text-sm active:scale-95"><Share2 size={18} /> Share</button>
+          <button onClick={() => setIsCropOpen(false)} className="bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-full flex items-center gap-2 shadow-[0_8px_30px_rgba(0,0,0,0.5)] font-bold text-sm border border-white/20 active:scale-95"><X size={18} /> Cancel</button>
+        </div>
+      )}
     </div>
   );
 }

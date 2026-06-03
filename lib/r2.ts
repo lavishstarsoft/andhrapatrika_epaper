@@ -24,14 +24,14 @@ export async function uploadToR2(
 
   await R2.send(command);
 
-  // Return relative proxy URL
-  return `/api/media/${key}`;
+  // Return public URL (whether it's CDN or proxy path)
+  return `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
 }
 
 export function resolveMediaUrl(url: string | null | undefined): string {
   if (!url) return '';
   if (url.includes('.r2.cloudflarestorage.com/')) {
-    return url.replace(/^https:\/\/[^/]+\.r2\.cloudflarestorage\.com\//, '/api/media/');
+    return url.replace(/^https:\/\/[^/]+\.r2\.cloudflarestorage\.com\//, `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/`);
   }
   return url;
 }

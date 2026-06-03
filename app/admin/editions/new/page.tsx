@@ -221,19 +221,17 @@ export default function PublishEdition() {
   const [isConvertingPdf, setIsConvertingPdf] = useState(false);
   const [pdfProgress, setPdfProgress] = useState(0);
 
-  /** Keep under ~2MB so proxies (e.g. Vercel ~4.5MB) never reject; presigned path has no body limit. */
-  const MAX_FULL_JPG_BYTES = 2 * 1024 * 1024;
-
-  const blobToJpeg = (
+  /** Convert canvas to WebP blob at given quality. */
+  const blobToWebp = (
     canvas: HTMLCanvasElement,
     quality: number
   ): Promise<Blob | null> =>
     new Promise((resolve) => {
-      canvas.toBlob((b) => resolve(b), 'image/jpeg', quality);
+      canvas.toBlob((b) => resolve(b), 'image/webp', quality);
     });
 
-  /** Resize + lower quality until file is small enough for /api/upload/image fallback. */
-  const compressFallbackJpeg = async (file: File): Promise<Blob> => {
+  /** Convert image file to WebP at quality 0.82 — no aggressive compression, preserves sharpness. */
+  const convertToWebp = async (file: File): Promise<Blob> => {
     if (!file.type.startsWith('image/')) return file;
 
     return new Promise((resolve, reject) => {
@@ -242,47 +240,24 @@ export default function PublishEdition() {
 
       img.onload = async () => {
         try {
-          let maxSide = Math.min(4000, Math.max(img.width, img.height));
-          let quality = 0.95;
-
-          for (let attempt = 0; attempt < 35; attempt++) {
-            const ratio = Math.min(maxSide / img.width, maxSide / img.height, 1);
-            const targetW = Math.max(1, Math.round(img.width * ratio));
-            const targetH = Math.max(1, Math.round(img.height * ratio));
-
-            const canvas = document.createElement('canvas');
-            canvas.width = targetW;
-            canvas.height = targetH;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-              URL.revokeObjectURL(objectUrl);
-              reject(new Error('Canvas not available'));
-              return;
-            }
-            ctx.drawImage(img, 0, 0, targetW, targetH);
-
-            let blob = await blobToJpeg(canvas, quality);
-            if (!blob) {
-              URL.revokeObjectURL(objectUrl);
-              reject(new Error('Could not encode image'));
-              return;
-            }
-
-            if (blob.size <= MAX_FULL_JPG_BYTES) {
-              URL.revokeObjectURL(objectUrl);
-              resolve(blob);
-              return;
-            }
-
-            if (quality > 0.50) {
-              quality -= 0.03;
-            } else {
-              maxSide = Math.max(800, Math.floor(maxSide * 0.85));
-            }
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error('Canvas not available'));
+            return;
           }
+          ctx.drawImage(img, 0, 0, img.width, img.height);
 
+          const blob = await blobToWebp(canvas, 0.82);
           URL.revokeObjectURL(objectUrl);
-          reject(new Error('Image still too large after compression. Use smaller scans.'));
+          if (!blob) {
+            reject(new Error('Could not encode image to WebP'));
+            return;
+          }
+          resolve(blob);
         } catch (e) {
           URL.revokeObjectURL(objectUrl);
           reject(e);
@@ -298,7 +273,7 @@ export default function PublishEdition() {
     });
   };
 
-  const compressThumbJpeg = async (file: File): Promise<Blob> => {
+  const compressThumbWebp = async (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const img = new window.Image();
       const objectUrl = URL.createObjectURL(file);
@@ -318,7 +293,7 @@ export default function PublishEdition() {
           return;
         }
         ctx.drawImage(img, 0, 0, targetW, targetH);
-        const blob = await blobToJpeg(canvas, 0.68);
+        const blob = await blobToWebp(canvas, 0.68);
         URL.revokeObjectURL(objectUrl);
         if (!blob) {
           reject(new Error('Thumb encode failed'));
@@ -353,7 +328,7 @@ export default function PublishEdition() {
     const fullPut = await fetch(data.full.putUrl, {
       method: 'PUT',
       body: fullBlob,
-      headers: { 'Content-Type': 'image/jpeg' },
+      headers: { 'Content-Type': 'image/webp' },
     });
     if (!fullPut.ok) {
       throw new Error(`Full image upload failed (${fullPut.status})`);
@@ -361,7 +336,7 @@ export default function PublishEdition() {
     const thumbPut = await fetch(data.thumb.putUrl, {
       method: 'PUT',
       body: thumbBlob,
-      headers: { 'Content-Type': 'image/jpeg' },
+      headers: { 'Content-Type': 'image/webp' },
     });
     if (!thumbPut.ok) {
       throw new Error(`Thumbnail upload failed (${thumbPut.status})`);
@@ -538,8 +513,8 @@ export default function PublishEdition() {
             // Force loading of embedded fonts/resources before rendering to avoid fallback fonts (which look bold)
             await page.getOperatorList();
 
-            // Render at 5.0x scale for crisp, high-resolution reading layout on devices (matches PDF clarity)
-            const viewport = page.getViewport({ scale: 5.0 });
+            // Render at 3.0x scale — sharp enough for reading, avoids oversized files that trigger compression
+            const viewport = page.getViewport({ scale: 3.0 });
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             if (!context) continue;
@@ -556,20 +531,20 @@ export default function PublishEdition() {
               viewport: viewport,
             }).promise;
 
-            // JPEG quality 1.0 = zero compression, original PDF quality preserved
+            // WebP quality 0.82 — sharp, efficient (Yellowsingam-style)
             const blob = await new Promise<Blob | null>((res) => {
-              canvas.toBlob((b) => res(b), 'image/jpeg', 1.0);
+              canvas.toBlob((b) => res(b), 'image/webp', 0.82);
             });
 
             if (blob) {
               const cleanFileName = file.name.replace(/\.pdf$/i, '');
-              const imageFile = new File([blob], `${cleanFileName}_page_${pageNum}.jpg`, {
-                type: 'image/jpeg',
+              const imageFile = new File([blob], `${cleanFileName}_page_${pageNum}.webp`, {
+                type: 'image/webp',
               });
               renderedFiles.push(imageFile);
 
               // Generate preview data URL
-              const thumbUrl = canvas.toDataURL('image/jpeg', 0.15);
+              const thumbUrl = canvas.toDataURL('image/webp', 0.15);
               renderedPreviews.push(thumbUrl);
             }
           }
@@ -645,17 +620,16 @@ export default function PublishEdition() {
 
         for (let i = 0; i < files.length; i++) {
           const original = files[i];
-          const thumbBlob = await compressThumbJpeg(original);
+          const webpBlob = await convertToWebp(original);
+          const thumbBlob = await compressThumbWebp(original);
 
           let pageMeta: (typeof uploadedPages)[0];
           try {
-            pageMeta = await uploadEditionPageViaPresign(folderName, i + 1, original, thumbBlob);
+            pageMeta = await uploadEditionPageViaPresign(folderName, i + 1, webpBlob, thumbBlob);
           } catch (presignErr) {
-            console.warn(`Presigned upload failed for page ${i + 1}, using fallback:`, presignErr);
-            // Compress to fit under Vercel's ~4.5MB body limit
-            const compressedBlob = await compressFallbackJpeg(original);
-            const compressedFile = new File([compressedBlob], original.name, { type: 'image/jpeg' });
-            pageMeta = await uploadEditionPageViaApi(folderName, i + 1, compressedFile);
+            console.warn(`Presigned upload failed for page ${i + 1}, using server fallback:`, presignErr);
+            // Server-side sharp will handle conversion — send original file
+            pageMeta = await uploadEditionPageViaApi(folderName, i + 1, original);
           }
           uploadedPages.push(pageMeta);
 
