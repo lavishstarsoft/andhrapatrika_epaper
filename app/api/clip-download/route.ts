@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
     const cropW = croppedMeta.width || finalWidth;
     const cropH = croppedMeta.height || finalHeight;
 
-    const logoTargetWidth = Math.max(150, Math.min(300, Math.round(cropW * 0.20)));
+    const logoTargetWidth = Math.max(350, Math.min(1200, Math.round(cropW * 0.50)));
     const resizedLogoBuffer = await sharp(logoBuffer)
       .resize({ width: logoTargetWidth })
       .flatten({ background: '#ffffff' })
@@ -149,13 +149,14 @@ export async function GET(request: NextRequest) {
     const line2 = 'https://andhrapatrikaa.com/';
     const hasLine1 = line1.length > 0;
     
-    const line1Size = Math.max(12, Math.min(26, Math.round(cropW * 0.024)));
-    const line2Size = Math.max(10, Math.min(20, Math.round(cropW * 0.018)));
-    const lineGap = 2; // Almost no gap
-    const textPaddingY = 1; // Minimal padding
+    const line1Size = Math.max(14, Math.min(48, Math.round(cropW * 0.024)));
+    const line2Size = Math.max(12, Math.min(36, Math.round(cropW * 0.018)));
+    const lineGap = Math.max(2, Math.min(8, Math.round(cropW * 0.003)));
+    const textPaddingTop = 0; // No gap below the logo
+    const textPaddingBottom = Math.max(4, Math.min(12, Math.round(cropW * 0.005)));
     
     const textBlockHeight =
-      textPaddingY * 2 + (hasLine1 ? line1Size : 0) + lineGap + line2Size;
+      textPaddingTop + textPaddingBottom + (hasLine1 ? line1Size : 0) + lineGap + line2Size;
 
     // Use Canvas for reliable text rendering with custom fonts
     const canvas = createCanvas(cropW, textBlockHeight);
@@ -170,7 +171,7 @@ export async function GET(request: NextRequest) {
     if (hasLine1) {
       ctx.font = `bold ${line1Size}px RobotoBold`;
       ctx.fillStyle = '#1a1a1a'; // Darker for better contrast
-      ctx.fillText(line1, cropW / 2, textPaddingY + line1Size / 2);
+      ctx.fillText(line1, cropW / 2, textPaddingTop + line1Size / 2);
     }
     
     ctx.font = `${line2Size}px Roboto`;
@@ -178,13 +179,13 @@ export async function GET(request: NextRequest) {
     ctx.fillText(
       line2, 
       cropW / 2, 
-      (hasLine1 ? textPaddingY + line1Size + lineGap : textPaddingY) + line2Size / 2
+      (hasLine1 ? textPaddingTop + line1Size + lineGap : textPaddingTop) + line2Size / 2
     );
     
     const textBuffer = canvas.toBuffer('image/png');
 
-    const padding = 4; // Minimal padding around logo (top/bottom space in header)
-    const textGap = 4;  // Minimal gap between logo and text block
+    const padding = Math.max(6, Math.min(24, Math.round(cropW * 0.01))); // Minimal padding around logo (top/bottom space in header)
+    const textGap = 0;  // Minimal gap between logo and text block
     const headerHeight = logoHeight + padding * 2 + textGap + textBlockHeight;
 
     // Add space below the header before the cropped newspaper clipping begins
@@ -236,7 +237,7 @@ export async function GET(request: NextRequest) {
           fit: 'inside',
         });
       }
-      composed = await sharpComposed.jpeg({ quality: 80 }).toBuffer();
+      composed = await sharpComposed.jpeg({ quality: 90, mozjpeg: true }).toBuffer();
     }
 
     const contentDisposition = isInline ? 'inline' : `attachment; filename="${filename}"`;
