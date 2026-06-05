@@ -184,9 +184,14 @@ export async function GET(request: NextRequest) {
     
     const textBuffer = canvas.toBuffer('image/png');
 
-    const padding = Math.max(6, Math.min(24, Math.round(cropW * 0.01))); // Minimal padding around logo (top/bottom space in header)
-    const textGap = 0;  // Minimal gap between logo and text block
-    const headerHeight = logoHeight + padding * 2 + textGap + textBlockHeight;
+    // Adjust for whitespace borders in the logo image using negative offsets
+    const logoTopOffset = -Math.round(logoHeight * 0.08); // Pull logo up to top border
+    const textTopOffset = -Math.round(logoHeight * 0.12); // Pull text block closer to logo
+    const bottomPadding = Math.max(6, Math.min(24, Math.round(cropW * 0.01))); // Padding below text before the article
+
+    const logoY = logoTopOffset;
+    const textY = logoY + logoHeight + textTopOffset;
+    const headerHeight = textY + textBlockHeight + bottomPadding;
 
     // Add space below the header before the cropped newspaper clipping begins
     const headerBottomGap = Math.max(8, Math.min(24, Math.round(cropW * 0.015)));
@@ -204,12 +209,12 @@ export async function GET(request: NextRequest) {
       .composite([
         {
           input: resizedLogoBuffer,
-          top: padding,
+          top: logoY,
           left: Math.max(0, Math.round((cropW - logoWidth) / 2)),
         },
         {
           input: textBuffer,
-          top: padding + logoHeight + textGap,
+          top: textY,
           left: 0,
         },
         {

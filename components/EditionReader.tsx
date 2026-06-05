@@ -1712,15 +1712,15 @@ export default function EditionReader({ initialEdition, alias, pageFlipSoundEnab
                   className="bg-white border-[3px] border-black shadow-xl inline-flex flex-col max-w-full"
                 >
                   {/* Card Header - Banner Style with Text */}
-                  <div className="bg-white flex flex-col border-b border-gray-100">
-                    <div className="pt-2 pb-0 flex items-center justify-center bg-white">
+                  <div className="bg-white flex flex-col border-b border-gray-100 overflow-hidden">
+                    <div className="pt-0 pb-0 flex items-center justify-center bg-white -mt-2">
                       <img
                         src="/ys-logo.jpeg"
                         alt="Andhrapatrika"
                         className="h-24 w-auto object-contain"
                       />
                     </div>
-                    <div className="pt-0 pb-0.5 px-3 text-center text-[11px] font-bold uppercase tracking-tight text-[#2D2D2D]">
+                    <div className="-mt-3 pb-0.5 px-3 text-center text-[11px] font-bold uppercase tracking-tight text-[#2D2D2D]">
                       {formatDate(edition?.date)} | Page {currentPage + 1}
                     </div>
                     <div className="pb-1.5 px-3 text-center text-[9px] font-medium tracking-tight text-[#2D2D2D]/70">
