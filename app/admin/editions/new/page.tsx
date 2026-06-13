@@ -69,31 +69,6 @@ function formatDdMmYyyy(dateValue: string): string {
   return `${day}/${month}/${year}`;
 }
 
-function loadPdfJS(): Promise<any> {
-  if (typeof window === 'undefined') return Promise.resolve(null);
-  const win = window as any;
-  if (win.pdfjsLib) return Promise.resolve(win.pdfjsLib);
-
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    script.async = true;
-    script.onload = () => {
-      const pdfjsLib = win.pdfjsLib;
-      if (!pdfjsLib) {
-        reject(new Error('PDF.js script loaded but window.pdfjsLib not found'));
-        return;
-      }
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      resolve(pdfjsLib);
-    };
-    script.onerror = () => {
-      reject(new Error('Failed to load PDF.js library from CDN. Please check your internet connection.'));
-    };
-    document.body.appendChild(script);
-  });
-}
-
 // Sortable Item Component for Drag and Drop
 interface SortableItemProps {
   id: string;
@@ -146,7 +121,7 @@ function SortableItem({ id, index, preview, uploadType, onRemove }: SortableItem
       </button>
 
       {/* Preview Content */}
-      {preview === 'pdf' ? (
+      {uploadType === 'pdf' ? (
         <div className="h-full flex flex-col items-center justify-center bg-red-50">
           <FileText size={24} className="text-red-600 mb-2" />
           <span className="text-xs text-red-700 font-medium">PDF</span>
@@ -218,10 +193,7 @@ export default function PublishEdition() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState('');
-  const [isConvertingPdf, setIsConvertingPdf] = useState(false);
-  const [pdfProgress, setPdfProgress] = useState(0);
 
-  /** Convert canvas to WebP blob at given quality. */
   const blobToWebp = (
     canvas: HTMLCanvasElement,
     quality: number
@@ -229,49 +201,6 @@ export default function PublishEdition() {
     new Promise((resolve) => {
       canvas.toBlob((b) => resolve(b), 'image/webp', quality);
     });
-
-  /** Convert image file to WebP at quality 0.82 — no aggressive compression, preserves sharpness. */
-  const convertToWebp = async (file: File): Promise<Blob> => {
-    if (!file.type.startsWith('image/')) return file;
-
-    return new Promise((resolve, reject) => {
-      const img = new window.Image();
-      const objectUrl = URL.createObjectURL(file);
-
-      img.onload = async () => {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            URL.revokeObjectURL(objectUrl);
-            reject(new Error('Canvas not available'));
-            return;
-          }
-          ctx.drawImage(img, 0, 0, img.width, img.height);
-
-          const blob = await blobToWebp(canvas, 0.82);
-          URL.revokeObjectURL(objectUrl);
-          if (!blob) {
-            reject(new Error('Could not encode image to WebP'));
-            return;
-          }
-          resolve(blob);
-        } catch (e) {
-          URL.revokeObjectURL(objectUrl);
-          reject(e);
-        }
-      };
-
-      img.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error('Failed to read image'));
-      };
-
-      img.src = objectUrl;
-    });
-  };
 
   const compressThumbWebp = async (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
@@ -479,7 +408,7 @@ export default function PublishEdition() {
     }
   };
 
-  const handleFiles = async (newFiles: File[]) => {
+  const handleFiles = (newFiles: File[]) => {
     const validFiles = newFiles.filter(file => {
       if (formData.uploadType === 'pdf') {
         return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
@@ -490,85 +419,19 @@ export default function PublishEdition() {
 
     if (validFiles.length === 0) return;
 
-    if (formData.uploadType === 'pdf') {
-      setIsConvertingPdf(true);
-      setPdfProgress(0);
-      setError('');
-      try {
-        const pdfjs = await loadPdfJS();
-        
-        for (const file of validFiles) {
-          const arrayBuffer = await file.arrayBuffer();
-          const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
-          const pdf = await loadingTask.promise;
-          const numPages = pdf.numPages;
+    setFiles(prev => [...prev, ...validFiles]);
 
-          const renderedFiles: File[] = [];
-          const renderedPreviews: string[] = [];
-
-          for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-            setPdfProgress(Math.round(((pageNum - 1) / numPages) * 100));
-            const page = await pdf.getPage(pageNum);
-            
-            // Force loading of embedded fonts/resources before rendering to avoid fallback fonts (which look bold)
-            await page.getOperatorList();
-
-            // Render at 3.0x scale — sharp enough for reading, avoids oversized files that trigger compression
-            const viewport = page.getViewport({ scale: 3.0 });
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            if (!context) continue;
-
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-
-            // Fill canvas with solid white background to prevent transparent anti-aliasing edges from appearing bold/thick
-            context.fillStyle = '#ffffff';
-            context.fillRect(0, 0, canvas.width, canvas.height);
-
-            await page.render({
-              canvasContext: context,
-              viewport: viewport,
-            }).promise;
-
-            // WebP quality 0.82 — sharp, efficient (Yellowsingam-style)
-            const blob = await new Promise<Blob | null>((res) => {
-              canvas.toBlob((b) => res(b), 'image/webp', 0.82);
-            });
-
-            if (blob) {
-              const cleanFileName = file.name.replace(/\.pdf$/i, '');
-              const imageFile = new File([blob], `${cleanFileName}_page_${pageNum}.webp`, {
-                type: 'image/webp',
-              });
-              renderedFiles.push(imageFile);
-
-              // Generate preview data URL
-              const thumbUrl = canvas.toDataURL('image/webp', 0.15);
-              renderedPreviews.push(thumbUrl);
-            }
-          }
-
-          setFiles(prev => [...prev, ...renderedFiles]);
-          setPreviews(prev => [...prev, ...renderedPreviews]);
-        }
-      } catch (err) {
-        console.error('PDF Conversion error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to convert PDF pages. The document may be encrypted or corrupted.');
-      } finally {
-        setIsConvertingPdf(false);
-        setPdfProgress(0);
-      }
-    } else {
-      setFiles(prev => [...prev, ...validFiles]);
-      validFiles.forEach(file => {
+    validFiles.forEach(file => {
+      if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = (e) => {
           setPreviews(prev => [...prev, e.target?.result as string]);
         };
         reader.readAsDataURL(file);
-      });
-    }
+      } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        setPreviews(prev => [...prev, 'pdf']);
+      }
+    });
   };
 
   const removeFile = (index: number) => {
@@ -609,7 +472,7 @@ export default function PublishEdition() {
       const folderName = formData.alias || normalizedDate;
 
       // Avoid 413: presigned PUT to R2 (no Next body), else tiny file to /api/upload/image.
-      if (formData.uploadType === 'images' || formData.uploadType === 'pdf') {
+      if (formData.uploadType === 'images') {
         const uploadedPages: Array<{
           filename: string;
           url: string;
@@ -620,15 +483,13 @@ export default function PublishEdition() {
 
         for (let i = 0; i < files.length; i++) {
           const original = files[i];
-          const webpBlob = await convertToWebp(original);
           const thumbBlob = await compressThumbWebp(original);
 
           let pageMeta: (typeof uploadedPages)[0];
           try {
-            pageMeta = await uploadEditionPageViaPresign(folderName, i + 1, webpBlob, thumbBlob);
+            pageMeta = await uploadEditionPageViaPresign(folderName, i + 1, original, thumbBlob);
           } catch (presignErr) {
-            console.warn(`Presigned upload failed for page ${i + 1}, using server fallback:`, presignErr);
-            // Server-side sharp will handle conversion — send original file
+            console.warn(`Presigned upload failed for page ${i + 1}, using fallback:`, presignErr);
             pageMeta = await uploadEditionPageViaApi(folderName, i + 1, original);
           }
           uploadedPages.push(pageMeta);
@@ -858,19 +719,7 @@ export default function PublishEdition() {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            {isConvertingPdf ? (
-              <div className="flex flex-col items-center justify-center space-y-4 py-8">
-                <div className="w-12 h-12 border-4 border-[#3b5bdb]/30 border-t-[#3b5bdb] rounded-full animate-spin" />
-                <h3 className="text-lg font-semibold text-gray-800">Converting PDF Pages...</h3>
-                <div className="w-48 bg-gray-200 h-2 rounded-full overflow-hidden">
-                  <div className="bg-[#3b5bdb] h-full transition-all duration-300" style={{ width: `${pdfProgress}%` }} />
-                </div>
-                <p className="text-[#3b5bdb] text-sm font-semibold">{pdfProgress}% completed</p>
-                <p className="text-gray-400 text-xs max-w-xs text-center">
-                  Please wait, rendering your PDF pages inside the browser for high quality upload.
-                </p>
-              </div>
-            ) : files.length === 0 ? (
+            {files.length === 0 ? (
               <>
                 <div className="w-24 h-24 mb-4 relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-green-100 to-blue-100 rounded-xl transform rotate-6" />
@@ -886,7 +735,7 @@ export default function PublishEdition() {
                 </p>
                 {formData.uploadType === 'pdf' && (
                   <p className="text-gray-500 text-xs mb-6 max-w-md text-center">
-                    Each PDF page is converted to JPG images directly in your browser, uploaded to cloud storage via secure URLs, then saved with your
+                    Each PDF page is converted to images on the server, uploaded to cloud storage, then saved with your
                     chosen status (Live / Scheduled / Draft).
                   </p>
                 )}
@@ -972,7 +821,7 @@ export default function PublishEdition() {
             <div className="flex items-center justify-end gap-3">
              <button
               onClick={handleSubmit}
-              disabled={uploading || isConvertingPdf}
+              disabled={uploading}
               className="flex items-center gap-2 px-6 py-3 bg-[#3b5bdb] text-white rounded-xl font-semibold hover:bg-[#364fc7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {uploading ? (
@@ -989,7 +838,7 @@ export default function PublishEdition() {
             </button>
             <button
               onClick={handleReset}
-              disabled={uploading || isConvertingPdf}
+              disabled={uploading}
               className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw size={18} />

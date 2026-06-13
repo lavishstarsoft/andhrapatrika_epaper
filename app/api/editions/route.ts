@@ -5,20 +5,7 @@ import { uploadToR2, resolveMediaUrl } from '@/lib/r2';
 
 import path from 'path';
 import sharp from 'sharp';
-
-let pdfToImages: any = null;
-async function getPdfToImages() {
-  if (!pdfToImages) {
-    try {
-      const mod = await import('pdf-to-img');
-      pdfToImages = mod.pdf;
-      console.log('pdf-to-img loaded successfully via dynamic import');
-    } catch (loadErr) {
-      console.error('Failed to load pdf-to-img dynamically:', loadErr);
-    }
-  }
-  return pdfToImages;
-}
+import { pdf as pdfToImages } from 'pdf-to-img';
 
 function isPdfUpload(file: File, buffer: Buffer): boolean {
   if (file.type === 'application/pdf') return true;
@@ -213,21 +200,8 @@ export async function POST(request: NextRequest) {
           nextPageNum += 1;
         } else if (isPdfUpload(file, buffer)) {
           try {
-            const pdfToImagesFn = await getPdfToImages();
-            if (!pdfToImagesFn) {
-              return NextResponse.json(
-                {
-                  error: 'PDF processing not available. Try uploading as images instead.',
-                },
-                { status: 503 }
-              );
-            }
-            console.log('Starting PDF to images conversion for:', file.name, 'size:', buffer.length, '(scale: 3.0)');
-            const doc = await pdfToImagesFn(buffer, { scale: 3.0 });
-            let pageCount = 0;
+            const doc = await pdfToImages(buffer, { scale: 2.5 });
             for await (const pagePng of doc) {
-              pageCount++;
-              console.log('Converting PDF page:', pageCount);
               const pageMeta = await uploadEditionImageBuffers(
                 Buffer.from(pagePng),
                 folderName,
@@ -236,15 +210,12 @@ export async function POST(request: NextRequest) {
               files.push(pageMeta);
               nextPageNum += 1;
             }
-            console.log('PDF conversion completed:', pageCount, 'pages');
           } catch (pdfErr) {
             console.error('PDF to image conversion failed:', pdfErr);
-            const errorMsg = pdfErr instanceof Error ? pdfErr.message : String(pdfErr);
-            console.error('Error details:', errorMsg, 'Stack:', pdfErr instanceof Error ? pdfErr.stack : '');
             return NextResponse.json(
               {
                 error:
-                  'Failed to convert PDF to images. ' + errorMsg + ' Try uploading as images instead.',
+                  'Failed to convert PDF to images. Use a valid, unencrypted PDF or try exporting it again from your source.',
               },
               { status: 400 }
             );
